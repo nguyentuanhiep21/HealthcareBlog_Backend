@@ -4,50 +4,89 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HealthCareBlog_Backend.Models.Entities;
 
 /// <summary>
-/// Bảng Posts - Quản lý bài đăng của người dùng
-/// Lưu trữ nội dung bài viết, ảnh/video đính kèm
-/// Thống kê số lượt thích, bình luận, lượt xem
-/// Hỗ trợ tính năng tìm kiếm bài viết bằng AI
+/// Bảng Posts - Lưu các bài viết của người dùng
+/// Chứa nội dung, hình ảnh (URL list), counters và metadata phục vụ feed và chức năng quản trị
 /// </summary>
 [Table("posts")]
-public partial class Post
+public class Post
 {
     [Key]
-    [Column("post_id")]
-    public int PostId { get; set; } // ID bài đăng
+    [Column("id")]
+    public int Id { get; set; } // ID bài viết
 
-    [Required]
-    [Column("user_id")]
-    public string UserId { get; set; } = null!; // ID tác giả
-
-    [Required]
     [Column("content")]
-    public string Content { get; set; } = null!; // Nội dung bài viết
+    [Required]
+    public string Content { get; set; } = string.Empty; // Nội dung bài viết
 
-    [Column("media_urls")]
-    public string? MediaUrls { get; set; } // JSON array chứa URL ảnh/video
-
-    [Column("likes_count")]
-    public int LikesCount { get; set; } = 0; // Số lượt thích (denormalized để query nhanh)
-
-    [Column("comments_count")]
-    public int CommentsCount { get; set; } = 0; // Số lượt bình luận
-
-    [Column("views_count")]
-    public int ViewsCount { get; set; } = 0; // Số lượt xem
-
-    [Column("is_published")]
-    public bool IsPublished { get; set; } = true; // Trạng thái công khai/nháp
+    [Column("image_urls")]
+    [StringLength(2000)]
+    public string? ImageUrls { get; set; } // Danh sách URL ảnh (có thể lưu dưới dạng JSON)
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Thời gian đăng bài
+    public DateTime CreatedAt { get; set; } // Thời gian tạo bài
 
     [Column("updated_at")]
-    public DateTime? UpdatedAt { get; set; } // Thời gian chỉnh sửa cuối
+    public DateTime? UpdatedAt { get; set; } // Thời gian cập nhật cuối
 
-    // Navigation Properties
+    [Column("is_edited")]
+    public bool IsEdited { get; set; } // Đã chỉnh sửa hay chưa
+
+    [Column("is_deleted")]
+    public bool IsDeleted { get; set; } // Cờ xóa mềm
+
+    [Column("view_count")]
+    public int ViewCount { get; set; } // Lượt xem (cache)
+
+    [Column("is_pinned")]
+    public bool IsPinned { get; set; } // Đánh dấu ghim bài
+
+    // ========== COUNTERS ==========
+    [Column("like_count")]
+    public int LikeCount { get; set; } // Số lượt thích
+
+    [Column("comment_count")]
+    public int CommentCount { get; set; } // Số bình luận
+
+    [Column("share_count")]
+    public int ShareCount { get; set; } // Số lượt chia sẻ
+
+    // ========== DELETION INFO ==========
+    [Column("deleted_at")]
+    public DateTime? DeletedAt { get; set; } // Thời gian xóa
+
+    [Column("deleted_by")]
+    [StringLength(450)]
+    public string? DeletedBy { get; set; } // ID người xóa
+
+    [Column("deletion_reason")]
+    [StringLength(1000)]
+    public string? DeletionReason { get; set; } // Lý do xóa
+
+    [Column("is_deleted_by_admin")]
+    public bool IsDeletedByAdmin { get; set; } // Xóa bởi admin hay user
+
+    // ========== FOREIGN KEYS ==========
+    [Column("user_id")]
+    [StringLength(450)]
+    [Required]
+    public string UserId { get; set; } = string.Empty; // ID tác giả
+
+    [Column("group_id")]
+    public int? GroupId { get; set; } // Nếu đăng trong nhóm, id nhóm
+
+    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!;
-    public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+    public virtual ApplicationUser User { get; set; } = null!; // Tác giả
+
+    [ForeignKey("GroupId")]
+    public virtual Group? Group { get; set; } // Nhóm chứa bài (nếu có)
+
+    [ForeignKey("DeletedBy")]
+    public virtual ApplicationUser? DeletedByUser { get; set; } // Người xóa (navigation)
+
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+    public virtual ICollection<PostHashtag> PostHashtags { get; set; } = new List<PostHashtag>();
+    public virtual ICollection<PostShare> Shares { get; set; } = new List<PostShare>();
+    public virtual ICollection<ReportedContent> Reports { get; set; } = new List<ReportedContent>(); // Báo cáo liên quan
 }

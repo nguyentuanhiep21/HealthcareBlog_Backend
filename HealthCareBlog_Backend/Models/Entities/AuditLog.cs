@@ -4,43 +4,67 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HealthCareBlog_Backend.Models.Entities;
 
 /// <summary>
-/// Bảng AuditLogs - Ghi lại lịch sử hành động của Admin
-/// Lưu trữ mọi thao tác quản trị: xóa bài, ban user, chỉnh sửa...
-/// Dùng để tracking và audit trail cho hệ thống
-/// Đảm bảo tính minh bạch và có thể rollback khi cần
+/// Bảng AuditLogs - Ghi nhận các hành động quản trị và sự kiện hệ thống
+/// Lưu loại hành động, thực thể bị tác động, giá trị cũ/mới, lý do, admin thực hiện và IP
+/// Dùng để truy vết thay đổi, kiểm tra bảo mật và lưu lịch sử quản trị
 /// </summary>
 [Table("audit_logs")]
-public partial class AuditLog
+public class AuditLog
 {
     [Key]
-    [Column("log_id")]
-    public int LogId { get; set; } // ID log
+    [Column("id")]
+    public int Id { get; set; } // ID bản ghi audit
 
+    [Column("action_type")]
     [Required]
-    [Column("admin_id")]
-    public string AdminId { get; set; } = null!; // ID admin thực hiện
-
-    [Required]
-    [Column("action")]
     [StringLength(50)]
-    public string Action { get; set; } = null!; // Hành động: Delete, Ban, Update, Restore...
+    public string ActionType { get; set; } = string.Empty; // Loại hành động (DeletePost, BanUser...)
 
+    [Column("entity_type")]
     [Required]
-    [Column("target_type")]
     [StringLength(50)]
-    public string TargetType { get; set; } = null!; // Loại đối tượng: User, Post, Comment...
+    public string EntityType { get; set; } = string.Empty; // Loại thực thể bị tác động (Post, Comment, User...)
 
+    [Column("entity_id")]
     [Required]
-    [Column("target_id")]
-    public int TargetId { get; set; } // ID đối tượng bị tác động
+    [StringLength(450)]
+    public string EntityId { get; set; } = string.Empty; // ID của thực thể bị tác động
 
     [Column("reason")]
-    public string? Reason { get; set; } // Lý do thực hiện hành động
+    [StringLength(500)]
+    public string? Reason { get; set; } // Lý do ngắn gọn cho hành động
+
+    [Column("description")]
+    [StringLength(2000)]
+    public string? Description { get; set; } // Mô tả chi tiết của hành động
+
+    [Column("old_value")]
+    public string? OldValue { get; set; } // Giá trị cũ (nếu cần)
+
+    [Column("new_value")]
+    public string? NewValue { get; set; } // Giá trị mới (nếu cần)
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Thời gian thực hiện
+    public DateTime CreatedAt { get; set; } // Thời gian ghi nhận
 
-    // Navigation Properties
+    [Column("ip_address")]
+    [StringLength(45)]
+    public string? IpAddress { get; set; } // Địa chỉ IP nguồn hành động
+
+    // ========== FOREIGN KEYS ==========
+    [Column("admin_id")]
+    [StringLength(450)]
+    [Required]
+    public string AdminId { get; set; } = string.Empty; // ID admin thực hiện hành động
+
+    [Column("target_user_id")]
+    [StringLength(450)]
+    public string? TargetUserId { get; set; } // ID người dùng (nếu hành động liên quan đến user)
+
+    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("AdminId")]
-    public virtual ApplicationUser Admin { get; set; } = null!;
+    public virtual ApplicationUser Admin { get; set; } = null!; // Admin thực hiện
+
+    [ForeignKey("TargetUserId")]
+    public virtual ApplicationUser? TargetUser { get; set; } // Người dùng liên quan
 }

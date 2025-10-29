@@ -4,36 +4,37 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HealthCareBlog_Backend.Models.Entities;
 
 /// <summary>
-/// Bảng ConversationParticipants - Quản lý thành viên trong cuộc hội thoại
-/// Kết nối giữa User và Conversation (many-to-many relationship)
-/// Lưu trữ thời gian tham gia và thời gian đọc tin nhắn cuối
-/// Dùng để hiển thị danh sách cuộc trò chuyện và đếm tin nhắn chưa đọc
+/// Bảng ConversationParticipants - Liệt kê người tham gia trong một cuộc trò chuyện
+/// Lưu thời gian tham gia/rời và liên kết tới user và conversation
+/// Dùng để quản lý thành viên trong cuộc trò chuyện và phân quyền truy cập tin nhắn
 /// </summary>
 [Table("conversation_participants")]
-public partial class ConversationParticipant
+public class ConversationParticipant
 {
     [Key]
-    [Column("participant_id")]
-    public int ParticipantId { get; set; } // ID thành viên
-
-    [Required]
-    [Column("conversation_id")]
-    public int ConversationId { get; set; } // ID cuộc hội thoại
-
-    [Required]
-    [Column("user_id")]
-    public string UserId { get; set; } = null!; // ID người tham gia
+    [Column("id")]
+    public int Id { get; set; } // ID của bản ghi tham gia
 
     [Column("joined_at")]
-    public DateTime JoinedAt { get; set; } = DateTime.UtcNow; // Thời gian tham gia
+    public DateTime JoinedAt { get; set; } // Thời gian tham gia
 
-    [Column("last_read_at")]
-    public DateTime? LastReadAt { get; set; } // Thời gian đọc tin nhắn cuối (để đếm unread)
+    [Column("left_at")]
+    public DateTime? LeftAt { get; set; } // Thời gian rời (nếu có)
 
-    // Navigation Properties
+    // ========== FOREIGN KEYS ==========
+    [Column("conversation_id")]
+    [Required]
+    public int ConversationId { get; set; } // ID cuộc trò chuyện
+
+    [Column("user_id")]
+    [StringLength(450)]
+    [Required]
+    public string UserId { get; set; } = string.Empty; // ID người tham gia
+
+    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("ConversationId")]
-    public virtual Conversation Conversation { get; set; } = null!;
+    public virtual Conversation Conversation { get; set; } = null!; // Cuộc trò chuyện
 
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!;
+    public virtual ApplicationUser User { get; set; } = null!; // Người dùng (navigation)
 }

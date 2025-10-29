@@ -4,33 +4,38 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HealthCareBlog_Backend.Models.Entities;
 
 /// <summary>
-/// Bảng Likes - Quản lý lượt thích bài viết
-/// Lưu trữ thông tin ai đã thích bài viết nào
-/// Đảm bảo mỗi user chỉ thích 1 lần cho mỗi bài (unique constraint)
-/// Dùng để hiển thị danh sách người thích và kiểm tra user đã thích chưa
+/// Bảng Likes - Lưu trữ lượt thích của người dùng cho bài viết hoặc bình luận
+/// Dùng để tính số lượng like, hiển thị ai đã like và kích hoạt thông báo
 /// </summary>
 [Table("likes")]
-public partial class Like
+public class Like
 {
     [Key]
-    [Column("like_id")]
-    public int LikeId { get; set; } // ID lượt thích
-
-    [Required]
-    [Column("user_id")]
-    public string UserId { get; set; } = null!; // ID người thích
-
-    [Required]
-    [Column("post_id")]
-    public int PostId { get; set; } // ID bài đăng được thích
+    [Column("id")]
+    public int Id { get; set; } // ID của lượt thích
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Thời gian thích
+    public DateTime CreatedAt { get; set; } // Thời gian người dùng like
 
-    // Navigation Properties
+    // ========== FOREIGN KEYS ==========
+    [Column("user_id")]
+    [StringLength(450)]
+    [Required]
+    public string UserId { get; set; } = string.Empty; // ID người dùng đã like
+
+    [Column("post_id")]
+    public int? PostId { get; set; } // Nếu like bài viết, id bài viết
+
+    [Column("comment_id")]
+    public int? CommentId { get; set; } // Nếu like bình luận, id bình luận
+
+    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!;
+    public virtual ApplicationUser User { get; set; } = null!; // Người đã like
 
     [ForeignKey("PostId")]
-    public virtual Post Post { get; set; } = null!;
+    public virtual Post? Post { get; set; } // Bài viết được like (nếu có)
+
+    [ForeignKey("CommentId")]
+    public virtual Comment? Comment { get; set; } // Bình luận được like (nếu có)
 }

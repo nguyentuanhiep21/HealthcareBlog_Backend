@@ -4,34 +4,35 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HealthCareBlog_Backend.Models.Entities;
 
 /// <summary>
-/// Bảng Conversations - Quản lý cuộc hội thoại
-/// Lưu trữ thông tin về cuộc trò chuyện giữa các user
-/// Hỗ trợ cả chat 1-1 (OneToOne) và chat nhóm (Group)
-/// Theo dõi thời gian tin nhắn cuối để sắp xếp danh sách chat
+/// Bảng Conversations - Quản lý cuộc trò chuyện giữa người dùng
+/// Lưu loại cuộc trò chuyện (Direct/Group), tên, avatar và thông tin thời gian
+/// Dùng cho chức năng nhắn tin và lưu lịch sử hội thoại
 /// </summary>
 [Table("conversations")]
-public partial class Conversation
+public class Conversation
 {
     [Key]
-    [Column("conversation_id")]
-    public int ConversationId { get; set; } // ID cuộc hội thoại
+    [Column("id")]
+    public int Id { get; set; } // ID cuộc trò chuyện
 
-    [Required]
-    [Column("conversation_type")]
-    [StringLength(20)]
-    public string ConversationType { get; set; } = "OneToOne"; // Loại: OneToOne hoặc Group
+    [Column("type")]
+    public ConversationType Type { get; set; } // Loại: Direct (1-1) hoặc Group
 
     [Column("name")]
-    [StringLength(100)]
-    public string? Name { get; set; } // Tên nhóm (null nếu là chat 1-1)
+    [StringLength(200)]
+    public string? Name { get; set; } // Tên cuộc trò chuyện (nhóm)
+
+    [Column("avatar_url")]
+    [StringLength(500)]
+    public string? AvatarUrl { get; set; } // Ảnh đại diện (nhóm)
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Thời gian tạo cuộc hội thoại
+    public DateTime CreatedAt { get; set; } // Thời gian tạo
 
-    [Column("last_message_at")]
-    public DateTime? LastMessageAt { get; set; } // Thời gian tin nhắn cuối (để sắp xếp)
+    [Column("updated_at")]
+    public DateTime? UpdatedAt { get; set; } // Thời gian cập nhật
 
-    // Navigation Properties
-    public virtual ICollection<ConversationParticipant> Participants { get; set; } = new List<ConversationParticipant>();
-    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
+    // ========== NAVIGATION PROPERTIES ==========
+    public virtual ICollection<ConversationParticipant> Participants { get; set; } = new List<ConversationParticipant>(); // Danh sách người tham gia
+    public virtual ICollection<Message> Messages { get; set; } = new List<Message>(); // Tin nhắn trong cuộc trò chuyện
 }

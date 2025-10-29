@@ -4,48 +4,63 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HealthCareBlog_Backend.Models.Entities;
 
 /// <summary>
-/// Bảng Notifications - Quản lý thông báo cho người dùng
-/// Gửi thông báo khi có follow mới, like, comment, message
-/// Lưu trữ loại thông báo, người gửi, đối tượng liên quan
-/// Theo dõi trạng thái đã đọc để hiển thị badge số thông báo mới
+/// Bảng Notifications - Lưu các thông báo gửi tới người dùng
+/// Bao gồm loại thông báo (like, comment, follow...), nội dung hiển thị, trạng thái đã đọc
+/// Và tham chiếu đến đối tượng liên quan (post, comment, group)
 /// </summary>
 [Table("notifications")]
-public partial class Notification
+public class Notification
 {
     [Key]
-    [Column("notification_id")]
-    public int NotificationId { get; set; } // ID thông báo
+    [Column("id")]
+    public int Id { get; set; } // ID thông báo
 
-    [Required]
-    [Column("user_id")]
-    public string UserId { get; set; } = null!; // ID người nhận thông báo
-
-    [Required]
     [Column("type")]
-    [StringLength(50)]
-    public string Type { get; set; } = null!; // Loại: Follow, Like, Comment, Message
+    public NotificationType Type { get; set; } // Loại thông báo (enum)
 
-    [Column("sender_id")]
-    public string? SenderId { get; set; } // ID người gửi (người thực hiện hành động)
-
-    [Column("reference_id")]
-    public int? ReferenceId { get; set; } // ID đối tượng liên quan (PostId, CommentId...)
-
-    [Column("reference_type")]
-    [StringLength(50)]
-    public string? ReferenceType { get; set; } // Loại đối tượng: Post, Comment, User...
-
-    [Required]
     [Column("content")]
-    public string Content { get; set; } = null!; // Nội dung thông báo hiển thị
+    [Required]
+    [StringLength(500)]
+    public string Content { get; set; } = string.Empty; // Nội dung hiển thị cho thông báo
 
     [Column("is_read")]
-    public bool IsRead { get; set; } = false; // Trạng thái đã đọc
+    public bool IsRead { get; set; } // Đã được người dùng đọc chưa
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Thời gian tạo thông báo
+    public DateTime CreatedAt { get; set; } // Thời gian tạo thông báo
 
-    // Navigation Properties
+    // ========== FOREIGN KEYS ==========
+    [Column("user_id")]
+    [StringLength(450)]
+    [Required]
+    public string UserId { get; set; } = string.Empty; // ID người nhận
+
+    [Column("actor_id")]
+    [StringLength(450)]
+    public string? ActorId { get; set; } // ID người thực hiện hành động gây ra thông báo
+
+    [Column("post_id")]
+    public int? PostId { get; set; } // ID bài viết liên quan (nếu có)
+
+    [Column("comment_id")]
+    public int? CommentId { get; set; } // ID bình luận liên quan (nếu có)
+
+    [Column("group_id")]
+    public int? GroupId { get; set; } // ID nhóm liên quan (nếu có)
+
+    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!;
+    public virtual ApplicationUser User { get; set; } = null!; // Người nhận
+
+    [ForeignKey("ActorId")]
+    public virtual ApplicationUser? Actor { get; set; } // Người thực hiện (navigation)
+
+    [ForeignKey("PostId")]
+    public virtual Post? Post { get; set; } // Bài viết liên quan
+
+    [ForeignKey("CommentId")]
+    public virtual Comment? Comment { get; set; } // Bình luận liên quan
+
+    [ForeignKey("GroupId")]
+    public virtual Group? Group { get; set; } // Nhóm liên quan
 }

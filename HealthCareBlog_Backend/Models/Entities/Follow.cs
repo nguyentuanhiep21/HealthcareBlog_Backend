@@ -10,27 +10,30 @@ namespace HealthCareBlog_Backend.Models.Entities;
 /// Và để lọc bài viết từ những người mà user đang follow
 /// </summary>
 [Table("follows")]
-public partial class Follow
+public class Follow
 {
     [Key]
-    [Column("follow_id")]
-    public int FollowId { get; set; } // ID của mối quan hệ follow
-
-    [Required]
-    [Column("follower_id")]
-    public string FollowerId { get; set; } = null!; // ID người theo dõi
-
-    [Required]
-    [Column("following_id")]
-    public string FollowingId { get; set; } = null!; // ID người được theo dõi
+    [Column("id")]
+    public int Id { get; set; } // ID của mối quan hệ follow
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Thời gian bắt đầu follow
+    public DateTime CreatedAt { get; set; } // Thời gian bắt đầu follow
 
-    // Navigation Properties
+    // ========== FOREIGN KEYS ==========
+    [Column("follower_id")]
+    [StringLength(450)]
+    [Required]
+    public string FollowerId { get; set; } = string.Empty; // ID người theo dõi
+
+    [Column("following_id")]
+    [StringLength(450)]
+    [Required]
+    public string FollowingId { get; set; } = string.Empty; // ID người được theo dõi
+
+    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("FollowerId")]
-    public virtual ApplicationUser Follower { get; set; } = null!;
+    public virtual ApplicationUser Follower { get; set; } = null!; // Người theo dõi (navigation)
 
     [ForeignKey("FollowingId")]
-    public virtual ApplicationUser FollowingUser { get; set; } = null!;
+    public virtual ApplicationUser FollowingUser { get; set; } = null!; // Người được theo dõi (navigation)
 }

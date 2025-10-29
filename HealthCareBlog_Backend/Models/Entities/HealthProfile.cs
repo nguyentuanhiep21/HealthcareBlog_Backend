@@ -44,5 +44,5 @@ public partial class HealthProfile
 
     // Navigation Properties
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!;
+    public virtual ApplicationUser User { get; set; } = null!; // Người dùng sở hữu hồ sơ
 }

@@ -4,50 +4,65 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HealthCareBlog_Backend.Models.Entities;
 
 /// <summary>
-/// Bảng ReportedContents - Quản lý báo cáo vi phạm từ người dùng
-/// User có thể báo cáo post, comment, hoặc user khác vi phạm
-/// Lưu trữ lý do báo cáo, trạng thái xử lý (Pending/Reviewed/Resolved)
-/// Admin sẽ xem xét và xử lý các báo cáo này
+/// Bảng ReportedContents - Quản lý các báo cáo vi phạm nội dung
+/// Lưu loại nội dung (Post, Comment, User...), id nội dung, lý do và trạng thái xử lý
+/// Dùng cho luồng moderation và lịch sử xử lý báo cáo
 /// </summary>
 [Table("reported_contents")]
-public partial class ReportedContent
+public class ReportedContent
 {
     [Key]
-    [Column("report_id")]
-    public int ReportId { get; set; } // ID báo cáo
+    [Column("id")]
+    public int Id { get; set; } // ID báo cáo
 
-    [Required]
-    [Column("reporter_id")]
-    public string ReporterId { get; set; } = null!; // ID người báo cáo
-
-    [Required]
     [Column("content_type")]
+    [Required]
     [StringLength(50)]
-    public string ContentType { get; set; } = null!; // Loại: Post, Comment, User
+    public string ContentType { get; set; } = string.Empty; // Loại nội dung: "Post", "Comment", "User"
 
-    [Required]
     [Column("content_id")]
-    public int ContentId { get; set; } // ID nội dung bị báo cáo
-
     [Required]
+    [StringLength(450)]
+    public string ContentId { get; set; } = string.Empty; // ID của nội dung được báo cáo
+
     [Column("reason")]
-    public string Reason { get; set; } = null!; // Lý do báo cáo: spam, harassment, inappropriate...
-
     [Required]
-    [Column("status")]
-    [StringLength(20)]
-    public string Status { get; set; } = "Pending"; // Trạng thái: Pending, Reviewed, Resolved
+    [StringLength(100)]
+    public string Reason { get; set; } = string.Empty; // Lý do báo cáo (tên ngắn)
 
-    [Column("reviewed_by")]
-    public string? ReviewedBy { get; set; } // ID admin xử lý
+    [Column("description")]
+    [StringLength(1000)]
+    public string? Description { get; set; } // Mô tả chi tiết từ người báo cáo
+
+    [Column("status")]
+    [Required]
+    [StringLength(20)]
+    public string Status { get; set; } = "Pending"; // Trạng thái: "Pending", "Resolved", "Rejected"
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Thời gian báo cáo
+    public DateTime CreatedAt { get; set; } // Thời điểm báo cáo
 
     [Column("resolved_at")]
-    public DateTime? ResolvedAt { get; set; } // Thời gian xử lý xong
+    public DateTime? ResolvedAt { get; set; } // Thời điểm xử lý xong
 
-    // Navigation Properties
+    [Column("admin_note")]
+    [StringLength(1000)]
+    public string? AdminNote { get; set; } // Ghi chú của admin khi xử lý
+
+    // ========== FOREIGN KEYS ==========
+    [Column("reporter_id")]
+    [StringLength(450)]
+    [Required]
+    public string ReporterId { get; set; } = string.Empty; // ID người báo cáo
+
+    [Column("resolved_by_id")]
+    [StringLength(450)]
+    public string? ResolvedById { get; set; } // ID admin xử lý (nếu có)
+
+    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("ReporterId")]
-    public virtual ApplicationUser Reporter { get; set; } = null!;
+    public virtual ApplicationUser Reporter { get; set; } = null!; // Người báo cáo
+
+    [ForeignKey("ResolvedById")]
+    public virtual ApplicationUser? ResolvedBy { get; set; } // Admin đã xử lý
 }

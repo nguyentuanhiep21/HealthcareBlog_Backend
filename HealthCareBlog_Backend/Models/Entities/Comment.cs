@@ -4,48 +4,81 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace HealthCareBlog_Backend.Models.Entities;
 
 /// <summary>
-/// Bảng Comments - Quản lý bình luận trên bài viết
-/// Hỗ trợ bình luận lồng nhau (reply comment) thông qua ParentCommentId
-/// Lưu trữ nội dung bình luận và thời gian tạo/chỉnh sửa
-/// Dùng để hiển thị chuỗi thảo luận dưới mỗi bài viết
+/// Bảng Comments - Quản lý bình luận của người dùng trên bài viết
+/// Lưu nội dung, quan hệ reply (ParentCommentId), metadata xóa/duyệt và các counters
 /// </summary>
 [Table("comments")]
-public partial class Comment
+public class Comment
 {
     [Key]
-    [Column("comment_id")]
-    public int CommentId { get; set; } // ID bình luận
+    [Column("id")]
+    public int Id { get; set; } // ID bình luận
 
-    [Required]
-    [Column("post_id")]
-    public int PostId { get; set; } // ID bài đăng
-
-    [Required]
-    [Column("user_id")]
-    public string UserId { get; set; } = null!; // ID người bình luận
-
-    [Required]
     [Column("content")]
-    public string Content { get; set; } = null!; // Nội dung bình luận
-
-    [Column("parent_comment_id")]
-    public int? ParentCommentId { get; set; } // ID bình luận cha (null nếu là comment gốc)
+    [Required]
+    [StringLength(2000)]
+    public string Content { get; set; } = string.Empty; // Nội dung bình luận
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Thời gian bình luận
+    public DateTime CreatedAt { get; set; } // Thời gian tạo
 
     [Column("updated_at")]
-    public DateTime? UpdatedAt { get; set; } // Thời gian chỉnh sửa
+    public DateTime? UpdatedAt { get; set; } // Thời gian cập nhật cuối (nếu có)
 
-    // Navigation Properties
+    [Column("is_edited")]
+    public bool IsEdited { get; set; } // Đã chỉnh sửa hay chưa
+
+    [Column("is_deleted")]
+    public bool IsDeleted { get; set; } // Cờ xóa mềm
+
+    // ========== COUNTERS ==========
+    [Column("like_count")]
+    public int LikeCount { get; set; } // Số lượt thích (cache)
+
+    [Column("reply_count")]
+    public int ReplyCount { get; set; } // Số phản hồi (reply) đã có
+
+    // ========== DELETION INFO ==========
+    [Column("deleted_at")]
+    public DateTime? DeletedAt { get; set; } // Thời gian xóa (nếu có)
+
+    [Column("deleted_by")]
+    [StringLength(450)]
+    public string? DeletedBy { get; set; } // ID người xóa (admin hoặc tác giả)
+
+    [Column("deletion_reason")]
+    [StringLength(1000)]
+    public string? DeletionReason { get; set; } // Lý do xóa (nếu có)
+
+    [Column("is_deleted_by_admin")]
+    public bool IsDeletedByAdmin { get; set; } // Xóa bởi admin hay tự xóa
+
+    // ========== FOREIGN KEYS ==========
+    [Column("post_id")]
+    [Required]
+    public int PostId { get; set; } // ID bài viết liên kết
+
+    [Column("user_id")]
+    [StringLength(450)]
+    [Required]
+    public string UserId { get; set; } = string.Empty; // ID người tạo bình luận
+
+    [Column("parent_comment_id")]
+    public int? ParentCommentId { get; set; } // ID bình luận cha nếu là reply
+
+    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("PostId")]
-    public virtual Post Post { get; set; } = null!;
+    public virtual Post Post { get; set; } = null!; // Bài viết liên quan
 
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!;
+    public virtual ApplicationUser User { get; set; } = null!; // Tác giả bình luận
 
     [ForeignKey("ParentCommentId")]
-    public virtual Comment? ParentComment { get; set; } // Bình luận cha
+    public virtual Comment? ParentComment { get; set; } // Bình luận cha (nếu có)
 
-    public virtual ICollection<Comment> Replies { get; set; } = new List<Comment>(); // Các reply
+    [ForeignKey("DeletedBy")]
+    public virtual ApplicationUser? DeletedByUser { get; set; } // Người đã xóa (navigation)
+
+    public virtual ICollection<Comment> Replies { get; set; } = new List<Comment>(); // Danh sách reply con
+    public virtual ICollection<Like> Likes { get; set; } = new List<Like>(); // Lượt thích cho bình luận
 }
