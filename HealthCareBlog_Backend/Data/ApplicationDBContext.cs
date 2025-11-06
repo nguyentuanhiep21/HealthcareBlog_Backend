@@ -544,19 +544,26 @@ namespace HealthCareBlog_Backend.Data
     {
         public ApplicationDbContext CreateDbContext(string[] args)
         {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+            
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
+                .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile("appsettings.Development.json", optional: true)
+                .AddJsonFile($"appsettings.{environment}.json", optional: true)
+                .AddEnvironmentVariables()
                 .Build();
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+            var connectionString = configuration.GetConnectionString("DefaultSQLConnection");
 
-            var connectionString = configuration.GetConnectionString("DefaultSQLConnection")
-                ?? throw new InvalidOperationException("Connection string 'DefaultSQLConnection' not found.");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Connection string 'DefaultSQLConnection' not found. " +
+                    "Please ensure it is properly configured in appsettings.json");
+            }
 
             optionsBuilder.UseSqlServer(connectionString);
-
             return new ApplicationDbContext(optionsBuilder.Options);
         }
     }
