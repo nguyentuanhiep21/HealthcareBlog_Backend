@@ -107,16 +107,8 @@ public class ApplicationUser : IdentityUser
     public virtual ICollection<UserBlock> BlockedUsers { get; set; } = new List<UserBlock>(); // Người user đã chặn
     public virtual ICollection<UserBlock> BlockedByUsers { get; set; } = new List<UserBlock>(); // Người đã chặn user
 
-    // Share & Report
-    public virtual ICollection<PostShare> PostShares { get; set; } = new List<PostShare>(); // Lịch sử chia sẻ
+    // Report
     public virtual ICollection<ReportedContent> Reports { get; set; } = new List<ReportedContent>(); // Báo cáo do user tạo
-
-    // Groups
-    public virtual ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>(); // Nhóm user tham gia
-
-    // Messaging
-    public virtual ICollection<ConversationParticipant> ConversationParticipants { get; set; } = new List<ConversationParticipant>(); // Tham gia các cuộc trò chuyện
-    public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>(); // Tin nhắn đã gửi
 
     // Health & Meal
     public virtual HealthProfile? HealthProfile { get; set; } // Hồ sơ sức khỏe

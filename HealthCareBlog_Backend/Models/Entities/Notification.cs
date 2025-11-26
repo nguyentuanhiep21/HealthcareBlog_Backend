@@ -6,7 +6,7 @@ namespace HealthCareBlog_Backend.Models.Entities;
 /// <summary>
 /// Bảng Notifications - Lưu các thông báo gửi tới người dùng
 /// Bao gồm loại thông báo (like, comment, follow...), nội dung hiển thị, trạng thái đã đọc
-/// Và tham chiếu đến đối tượng liên quan (post, comment, group)
+/// Và tham chiếu đến đối tượng liên quan (post, comment)
 /// </summary>
 [Table("notifications")]
 public class Notification
@@ -45,9 +45,6 @@ public class Notification
     [Column("comment_id")]
     public int? CommentId { get; set; } // ID bình luận liên quan (nếu có)
 
-    [Column("group_id")]
-    public int? GroupId { get; set; } // ID nhóm liên quan (nếu có)
-
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("UserId")]
     public virtual ApplicationUser User { get; set; } = null!; // Người nhận
@@ -60,7 +57,4 @@ public class Notification
 
     [ForeignKey("CommentId")]
     public virtual Comment? Comment { get; set; } // Bình luận liên quan
-
-    [ForeignKey("GroupId")]
-    public virtual Group? Group { get; set; } // Nhóm liên quan
 }

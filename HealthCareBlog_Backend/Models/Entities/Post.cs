@@ -37,18 +37,12 @@ public class Post
     [Column("view_count")]
     public int ViewCount { get; set; } // Lượt xem (cache)
 
-    [Column("is_pinned")]
-    public bool IsPinned { get; set; } // Đánh dấu ghim bài
-
     // ========== COUNTERS ==========
     [Column("like_count")]
     public int LikeCount { get; set; } // Số lượt thích
 
     [Column("comment_count")]
     public int CommentCount { get; set; } // Số bình luận
-
-    [Column("share_count")]
-    public int ShareCount { get; set; } // Số lượt chia sẻ
 
     // ========== DELETION INFO ==========
     [Column("deleted_at")]
@@ -71,22 +65,13 @@ public class Post
     [Required]
     public string UserId { get; set; } = string.Empty; // ID tác giả
 
-    [Column("group_id")]
-    public int? GroupId { get; set; } // Nếu đăng trong nhóm, id nhóm
-
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("UserId")]
     public virtual ApplicationUser User { get; set; } = null!; // Tác giả
-
-    [ForeignKey("GroupId")]
-    public virtual Group? Group { get; set; } // Nhóm chứa bài (nếu có)
 
     [ForeignKey("DeletedBy")]
     public virtual ApplicationUser? DeletedByUser { get; set; } // Người xóa (navigation)
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
-    public virtual ICollection<PostHashtag> PostHashtags { get; set; } = new List<PostHashtag>();
-    public virtual ICollection<PostShare> Shares { get; set; } = new List<PostShare>();
-    public virtual ICollection<ReportedContent> Reports { get; set; } = new List<ReportedContent>(); // Báo cáo liên quan
 }

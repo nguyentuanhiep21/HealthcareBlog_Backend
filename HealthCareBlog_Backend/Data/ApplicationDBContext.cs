@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HealthCareBlog_Backend.Data
 {
@@ -24,21 +27,6 @@ namespace HealthCareBlog_Backend.Data
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Like> Likes => Set<Like>();
         public DbSet<Comment> Comments => Set<Comment>();
-        public DbSet<PostShare> PostShares => Set<PostShare>();
-        public DbSet<Hashtag> Hashtags => Set<Hashtag>();
-        public DbSet<PostHashtag> PostHashtags => Set<PostHashtag>();
-
-        // Group
-        public DbSet<Group> Groups => Set<Group>();
-        public DbSet<UserGroup> UserGroups => Set<UserGroup>();
-        public DbSet<GroupRole> GroupRoles => Set<GroupRole>();
-        public DbSet<GroupJoinRequest> GroupJoinRequests => Set<GroupJoinRequest>();
-        public DbSet<GroupPostPending> GroupPostPendings => Set<GroupPostPending>();
-
-        // Messaging
-        public DbSet<Conversation> Conversations => Set<Conversation>();
-        public DbSet<ConversationParticipant> ConversationParticipants => Set<ConversationParticipant>();
-        public DbSet<Message> Messages => Set<Message>();
 
         // Health & AI
         public DbSet<HealthProfile> HealthProfiles => Set<HealthProfile>();
@@ -120,24 +108,24 @@ namespace HealthCareBlog_Backend.Data
                     .HasForeignKey(p => p.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(p => p.Group)
-                    .WithMany(g => g.Posts)
-                    .HasForeignKey(p => p.GroupId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
                 entity.HasOne(p => p.DeletedByUser)
                     .WithMany()
                     .HasForeignKey(p => p.DeletedBy)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasIndex(e => e.UserId);
-                entity.HasIndex(e => e.GroupId);
                 entity.HasIndex(e => e.CreatedAt);
                 entity.HasIndex(e => new { e.UserId, e.CreatedAt });
-                entity.HasIndex(e => new { e.GroupId, e.CreatedAt });
 
                 entity.Property(e => e.CreatedAt)
                     .HasDefaultValueSql("GETDATE()");
+
+                // Counters default
+                entity.Property(e => e.LikeCount)
+                    .HasDefaultValue(0);
+
+                entity.Property(e => e.CommentCount)
+                    .HasDefaultValue(0);
             });
 
             // ========== LIKE CONFIGURATION ==========
@@ -193,245 +181,10 @@ namespace HealthCareBlog_Backend.Data
 
                 entity.Property(e => e.CreatedAt)
                     .HasDefaultValueSql("GETDATE()");
-            });
 
-            // ========== POST SHARE CONFIGURATION ==========
-            modelBuilder.Entity<PostShare>(entity =>
-            {
-                entity.HasOne(ps => ps.Post)
-                    .WithMany(p => p.Shares)
-                    .HasForeignKey(ps => ps.PostId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(ps => ps.User)
-                    .WithMany(u => u.PostShares)
-                    .HasForeignKey(ps => ps.UserId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(ps => ps.Group)
-                    .WithMany()
-                    .HasForeignKey(ps => ps.GroupId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(e => new { e.UserId, e.PostId, e.CreatedAt });
-                entity.HasIndex(e => e.CreatedAt);
-
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== HASHTAG CONFIGURATION ==========
-            modelBuilder.Entity<Hashtag>(entity =>
-            {
-                entity.HasIndex(h => h.Name).IsUnique();
-
-                entity.Property(h => h.Name)
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== POST HASHTAG CONFIGURATION ==========
-            modelBuilder.Entity<PostHashtag>(entity =>
-            {
-                entity.HasKey(ph => new { ph.PostId, ph.HashtagId });
-
-                entity.HasOne(ph => ph.Post)
-                    .WithMany(p => p.PostHashtags)
-                    .HasForeignKey(ph => ph.PostId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(ph => ph.Hashtag)
-                    .WithMany(h => h.PostHashtags)
-                    .HasForeignKey(ph => ph.HashtagId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // ========== GROUP CONFIGURATION ==========
-            modelBuilder.Entity<Group>(entity =>
-            {
-                entity.HasOne(g => g.Owner)
-                    .WithMany()
-                    .HasForeignKey(g => g.OwnerId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(g => g.DeactivatedByAdmin)
-                    .WithMany()
-                    .HasForeignKey(g => g.DeactivatedBy)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(g => g.DeletedByUser)
-                    .WithMany()
-                    .HasForeignKey(g => g.DeletedBy)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(e => e.OwnerId);
-                entity.HasIndex(e => e.CreatedAt);
-                entity.HasIndex(e => e.Status);
-
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== USER GROUP CONFIGURATION ==========
-            modelBuilder.Entity<UserGroup>(entity =>
-            {
-                entity.HasOne(ug => ug.User)
-                    .WithMany(u => u.UserGroups)
-                    .HasForeignKey(ug => ug.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(ug => ug.Group)
-                    .WithMany(g => g.UserGroups)
-                    .HasForeignKey(ug => ug.GroupId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(ug => ug.Role)
-                    .WithMany(r => r.UserGroups)
-                    .HasForeignKey(ug => ug.RoleId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(e => new { e.UserId, e.GroupId }).IsUnique();
-                entity.HasIndex(e => e.GroupId);
-
-                entity.Property(e => e.JoinedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== GROUP ROLE CONFIGURATION ==========
-            modelBuilder.Entity<GroupRole>(entity =>
-            {
-                entity.HasIndex(e => e.Name).IsUnique();
-            });
-
-            // ========== GROUP JOIN REQUEST CONFIGURATION ==========
-            modelBuilder.Entity<GroupJoinRequest>(entity =>
-            {
-                entity.HasOne(gjr => gjr.Group)
-                    .WithMany(g => g.JoinRequests)
-                    .HasForeignKey(gjr => gjr.GroupId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(gjr => gjr.User)
-                    .WithMany()
-                    .HasForeignKey(gjr => gjr.UserId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(gjr => gjr.ResponsedBy)
-                    .WithMany()
-                    .HasForeignKey(gjr => gjr.ResponsedById)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(e => new { e.GroupId, e.UserId, e.IsApproved });
-                entity.HasIndex(e => e.RequestedAt);
-
-                entity.Property(e => e.RequestedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== GROUP POST PENDING CONFIGURATION ==========
-            modelBuilder.Entity<GroupPostPending>(entity =>
-            {
-                entity.HasOne(gpp => gpp.Group)
-                    .WithMany(g => g.PendingPosts)
-                    .HasForeignKey(gpp => gpp.GroupId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(gpp => gpp.Post)
-                    .WithMany()
-                    .HasForeignKey(gpp => gpp.PostId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(gpp => gpp.ResponsedBy)
-                    .WithMany()
-                    .HasForeignKey(gpp => gpp.ResponsedById)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(e => new { e.GroupId, e.IsApproved });
-                entity.HasIndex(e => e.SubmittedAt);
-
-                entity.Property(e => e.SubmittedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== CONVERSATION CONFIGURATION ==========
-            modelBuilder.Entity<Conversation>(entity =>
-            {
-                entity.HasIndex(e => e.CreatedAt);
-                entity.HasIndex(e => e.Type);
-
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== CONVERSATION PARTICIPANT CONFIGURATION ==========
-            modelBuilder.Entity<ConversationParticipant>(entity =>
-            {
-                entity.HasOne(cp => cp.Conversation)
-                    .WithMany(c => c.Participants)
-                    .HasForeignKey(cp => cp.ConversationId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(cp => cp.User)
-                    .WithMany(u => u.ConversationParticipants)
-                    .HasForeignKey(cp => cp.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasIndex(e => new { e.ConversationId, e.UserId }).IsUnique();
-
-                entity.Property(e => e.JoinedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== MESSAGE CONFIGURATION ==========
-            modelBuilder.Entity<Message>(entity =>
-            {
-                entity.HasOne(m => m.Conversation)
-                    .WithMany(c => c.Messages)
-                    .HasForeignKey(m => m.ConversationId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(m => m.Sender)
-                    .WithMany(u => u.SentMessages)
-                    .HasForeignKey(m => m.SenderId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(e => e.ConversationId);
-                entity.HasIndex(e => e.CreatedAt);
-                entity.HasIndex(e => new { e.ConversationId, e.CreatedAt });
-
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== HEALTH PROFILE CONFIGURATION ==========
-            modelBuilder.Entity<HealthProfile>(entity =>
-            {
-                entity.HasOne(hp => hp.User)
-                    .WithOne(u => u.HealthProfile)
-                    .HasForeignKey<HealthProfile>(hp => hp.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.Property(e => e.UpdatedAt)
-                    .HasDefaultValueSql("GETDATE()");
-            });
-
-            // ========== MEAL SUGGESTION CONFIGURATION ==========
-            modelBuilder.Entity<MealSuggestion>(entity =>
-            {
-                entity.HasOne(ms => ms.User)
-                    .WithMany(u => u.MealSuggestions)
-                    .HasForeignKey(ms => ms.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasIndex(e => e.UserId);
-                entity.HasIndex(e => e.CreatedAt);
-                entity.HasIndex(e => new { e.UserId, e.CreatedAt });
-
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETDATE()");
+                // Counter default
+                entity.Property(e => e.LikeCount)
+                    .HasDefaultValue(0);
             });
 
             // ========== NOTIFICATION CONFIGURATION ==========
@@ -455,11 +208,6 @@ namespace HealthCareBlog_Backend.Data
                 entity.HasOne(n => n.Comment)
                     .WithMany()
                     .HasForeignKey(n => n.CommentId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(n => n.Group)
-                    .WithMany()
-                    .HasForeignKey(n => n.GroupId)
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasIndex(e => e.UserId);
@@ -516,27 +264,143 @@ namespace HealthCareBlog_Backend.Data
 
         private void SeedData(ModelBuilder modelBuilder)
         {
-            // Seed Group Roles
-            modelBuilder.Entity<GroupRole>().HasData(
-                new GroupRole
+            // No seed data required for current schema
+        }
+
+        // ========== SAVE CHANGES HOOKS TO MAINTAIN COUNTERS ==========
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            // Process counter updates synchronously
+            ProcessCountersAsync(false).GetAwaiter().GetResult();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            await ProcessCountersAsync(true);
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        private async Task ProcessCountersAsync(bool isAsync)
+        {
+            // Likes
+            var addedLikes = ChangeTracker.Entries<Like>().Where(e => e.State == EntityState.Added).ToList();
+            var deletedLikes = ChangeTracker.Entries<Like>().Where(e => e.State == EntityState.Deleted).ToList();
+
+            // Comments
+            var addedComments = ChangeTracker.Entries<Comment>().Where(e => e.State == EntityState.Added).ToList();
+            var deletedComments = ChangeTracker.Entries<Comment>().Where(e => e.State == EntityState.Deleted).ToList();
+            var modifiedComments = ChangeTracker.Entries<Comment>().Where(e => e.State == EntityState.Modified).ToList();
+
+            // Process added likes
+            foreach (var entry in addedLikes)
+            {
+                var postId = entry.Entity.PostId;
+                var commentId = entry.Entity.CommentId;
+
+                if (postId.HasValue && postId.Value != 0)
                 {
-                    Id = 1,
-                    Name = "Owner",
-                    Description = "Chủ nhóm - Có toàn quyền quản lý nhóm"
-                },
-                new GroupRole
-                {
-                    Id = 2,
-                    Name = "Admin",
-                    Description = "Quản trị viên - Quản lý thành viên và bài viết"
-                },
-                new GroupRole
-                {
-                    Id = 3,
-                    Name = "Member",
-                    Description = "Thành viên - Tham gia và đăng bài trong nhóm"
+                    if (isAsync) await Database.ExecuteSqlRawAsync("UPDATE posts SET like_count = ISNULL(like_count,0) + 1 WHERE id = {0}", postId.Value);
+                    else Database.ExecuteSqlRaw("UPDATE posts SET like_count = ISNULL(like_count,0) + 1 WHERE id = {0}", postId.Value);
+
+                    var postEntry = ChangeTracker.Entries<Post>().FirstOrDefault(pe => pe.Entity.Id == postId.Value);
+                    if (postEntry != null) postEntry.Entity.LikeCount++;
                 }
-            );
+
+                if (commentId.HasValue && commentId.Value != 0)
+                {
+                    if (isAsync) await Database.ExecuteSqlRawAsync("UPDATE comments SET like_count = ISNULL(like_count,0) + 1 WHERE id = {0}", commentId.Value);
+                    else Database.ExecuteSqlRaw("UPDATE comments SET like_count = ISNULL(like_count,0) + 1 WHERE id = {0}", commentId.Value);
+
+                    var commentEntry = ChangeTracker.Entries<Comment>().FirstOrDefault(ce => ce.Entity.Id == commentId.Value);
+                    if (commentEntry != null) commentEntry.Entity.LikeCount++;
+                }
+            }
+
+            // Process deleted likes
+            foreach (var entry in deletedLikes)
+            {
+                var origPostId = entry.OriginalValues.GetValue<int?>(nameof(Like.PostId));
+                var origCommentId = entry.OriginalValues.GetValue<int?>(nameof(Like.CommentId));
+
+                if (origPostId.HasValue && origPostId.Value != 0)
+                {
+                    if (isAsync) await Database.ExecuteSqlRawAsync("UPDATE posts SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END WHERE id = {0}", origPostId.Value);
+                    else Database.ExecuteSqlRaw("UPDATE posts SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END WHERE id = {0}", origPostId.Value);
+
+                    var postEntry = ChangeTracker.Entries<Post>().FirstOrDefault(pe => pe.Entity.Id == origPostId.Value);
+                    if (postEntry != null && postEntry.Entity.LikeCount > 0) postEntry.Entity.LikeCount--;
+                }
+
+                if (origCommentId.HasValue && origCommentId.Value != 0)
+                {
+                    if (isAsync) await Database.ExecuteSqlRawAsync("UPDATE comments SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END WHERE id = {0}", origCommentId.Value);
+                    else Database.ExecuteSqlRaw("UPDATE comments SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END WHERE id = {0}", origCommentId.Value);
+
+                    var commentEntry = ChangeTracker.Entries<Comment>().FirstOrDefault(ce => ce.Entity.Id == origCommentId.Value);
+                    if (commentEntry != null && commentEntry.Entity.LikeCount > 0) commentEntry.Entity.LikeCount--;
+                }
+            }
+
+            // Process added comments
+            foreach (var entry in addedComments)
+            {
+                var postId = entry.Entity.PostId;
+                if (postId != 0)
+                {
+                    if (isAsync) await Database.ExecuteSqlRawAsync("UPDATE posts SET comment_count = ISNULL(comment_count,0) + 1 WHERE id = {0}", postId);
+                    else Database.ExecuteSqlRaw("UPDATE posts SET comment_count = ISNULL(comment_count,0) + 1 WHERE id = {0}", postId);
+
+                    var postEntry = ChangeTracker.Entries<Post>().FirstOrDefault(pe => pe.Entity.Id == postId);
+                    if (postEntry != null) postEntry.Entity.CommentCount++;
+                }
+            }
+
+            // Process deleted comments
+            foreach (var entry in deletedComments)
+            {
+                var origPostId = entry.OriginalValues.GetValue<int>(nameof(Comment.PostId));
+                if (origPostId != 0)
+                {
+                    if (isAsync) await Database.ExecuteSqlRawAsync("UPDATE posts SET comment_count = CASE WHEN comment_count > 0 THEN comment_count - 1 ELSE 0 END WHERE id = {0}", origPostId);
+                    else Database.ExecuteSqlRaw("UPDATE posts SET comment_count = CASE WHEN comment_count > 0 THEN comment_count - 1 ELSE 0 END WHERE id = {0}", origPostId);
+
+                    var postEntry = ChangeTracker.Entries<Post>().FirstOrDefault(pe => pe.Entity.Id == origPostId);
+                    if (postEntry != null && postEntry.Entity.CommentCount > 0) postEntry.Entity.CommentCount--;
+                }
+            }
+
+            // Process modified comments for soft-delete changes
+            foreach (var entry in modifiedComments)
+            {
+                var origIsDeleted = entry.OriginalValues.GetValue<bool>(nameof(Comment.IsDeleted));
+                var curIsDeleted = entry.Entity.IsDeleted;
+
+                if (!origIsDeleted && curIsDeleted)
+                {
+                    var postId = entry.Entity.PostId;
+                    if (postId != 0)
+                    {
+                        if (isAsync) await Database.ExecuteSqlRawAsync("UPDATE posts SET comment_count = CASE WHEN comment_count > 0 THEN comment_count - 1 ELSE 0 END WHERE id = {0}", postId);
+                        else Database.ExecuteSqlRaw("UPDATE posts SET comment_count = CASE WHEN comment_count > 0 THEN comment_count - 1 ELSE 0 END WHERE id = {0}", postId);
+
+                        var postEntry = ChangeTracker.Entries<Post>().FirstOrDefault(pe => pe.Entity.Id == postId);
+                        if (postEntry != null && postEntry.Entity.CommentCount > 0) postEntry.Entity.CommentCount--;
+                    }
+                }
+                else if (origIsDeleted && !curIsDeleted)
+                {
+                    var postId = entry.Entity.PostId;
+                    if (postId != 0)
+                    {
+                        if (isAsync) await Database.ExecuteSqlRawAsync("UPDATE posts SET comment_count = ISNULL(comment_count,0) + 1 WHERE id = {0}", postId);
+                        else Database.ExecuteSqlRaw("UPDATE posts SET comment_count = ISNULL(comment_count,0) + 1 WHERE id = {0}", postId);
+
+                        var postEntry = ChangeTracker.Entries<Post>().FirstOrDefault(pe => pe.Entity.Id == postId);
+                        if (postEntry != null) postEntry.Entity.CommentCount++;
+                    }
+                }
+            }
         }
     }
 
@@ -545,7 +409,7 @@ namespace HealthCareBlog_Backend.Data
         public ApplicationDbContext CreateDbContext(string[] args)
         {
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
-            
+
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)

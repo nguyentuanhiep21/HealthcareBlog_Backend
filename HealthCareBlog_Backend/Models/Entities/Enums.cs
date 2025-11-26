@@ -16,24 +16,6 @@ public enum Gender
     Other = 2
 }
 
-public enum GroupPrivacyType
-{
-    [Display(Name = "Công khai")]
-    Public = 0,
-
-    [Display(Name = "Riêng tư")]
-    Private = 1
-}
-
-public enum ConversationType
-{
-    [Display(Name = "Trò chuyện riêng")]
-    Direct = 0,
-
-    [Display(Name = "Trò chuyện nhóm")]
-    Group = 1
-}
-
 public enum NotificationType
 {
     [Display(Name = "Theo dõi")]
@@ -149,16 +131,4 @@ public enum UserStatus
 
     [Display(Name = "Đang chờ xác thực")]
     PendingVerification = 3
-}
-
-public enum GroupStatus
-{
-    [Display(Name = "Hoạt động")]
-    Active = 0,
-
-    [Display(Name = "Vô hiệu hóa")]
-    Deactivated = 1,
-
-    [Display(Name = "Đã xóa")]
-    Deleted = 2
 }

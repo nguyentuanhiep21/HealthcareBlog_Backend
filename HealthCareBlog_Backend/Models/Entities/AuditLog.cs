@@ -47,10 +47,6 @@ public class AuditLog
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } // Thời gian ghi nhận
 
-    [Column("ip_address")]
-    [StringLength(45)]
-    public string? IpAddress { get; set; } // Địa chỉ IP nguồn hành động
-
     // ========== FOREIGN KEYS ==========
     [Column("admin_id")]
     [StringLength(450)]
