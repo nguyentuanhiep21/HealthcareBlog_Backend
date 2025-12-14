@@ -68,13 +68,13 @@ public class Comment
   public virtual Post Post { get; set; } = null!; // Bài viết liên quan
 
   [ForeignKey("UserId")]
-  public virtual ApplicationUser User { get; set; } = null!; // Tác giả bình luận
+  public virtual User User { get; set; } = null!; // Tác giả bình luận
 
   [ForeignKey("ParentCommentId")]
   public virtual Comment? ParentComment { get; set; } // Bình luận cha (nếu có)
 
   [ForeignKey("DeletedBy")]
-  public virtual ApplicationUser? DeletedByUser { get; set; } // Người đã xóa (navigation)
+  public virtual User? DeletedByUser { get; set; } // Người đã xóa (navigation)
 
   public virtual ICollection<Comment> Replies { get; set; } = new List<Comment>(); // Danh sách reply con
   public virtual ICollection<Like> Likes { get; set; } = new List<Like>(); // Lượt thích cho bình luận

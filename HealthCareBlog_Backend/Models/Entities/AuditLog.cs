@@ -59,8 +59,8 @@ public class AuditLog
 
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("AdminId")]
-    public virtual ApplicationUser Admin { get; set; } = null!; // Admin thực hiện
+    public virtual User Admin { get; set; } = null!; // Admin thực hiện
 
     [ForeignKey("TargetUserId")]
-    public virtual ApplicationUser? TargetUser { get; set; } // Người dùng liên quan
+    public virtual User? TargetUser { get; set; } // Người dùng liên quan
 }

@@ -47,10 +47,10 @@ public class Notification
 
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!; // Người nhận
+    public virtual User User { get; set; } = null!; // Người nhận
 
     [ForeignKey("ActorId")]
-    public virtual ApplicationUser? Actor { get; set; } // Người thực hiện (navigation)
+    public virtual User? Actor { get; set; } // Người thực hiện (navigation)
 
     [ForeignKey("PostId")]
     public virtual Post? Post { get; set; } // Bài viết liên quan

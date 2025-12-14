@@ -67,10 +67,10 @@ public class Post
 
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!; // Tác giả
+    public virtual User User { get; set; } = null!; // Tác giả
 
     [ForeignKey("DeletedBy")]
-    public virtual ApplicationUser? DeletedByUser { get; set; } // Người xóa (navigation)
+    public virtual User? DeletedByUser { get; set; } // Người xóa (navigation)
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public virtual ICollection<Like> Likes { get; set; } = new List<Like>();

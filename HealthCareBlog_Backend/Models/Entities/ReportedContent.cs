@@ -61,8 +61,8 @@ public class ReportedContent
 
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("ReporterId")]
-    public virtual ApplicationUser Reporter { get; set; } = null!; // Người báo cáo
+    public virtual User Reporter { get; set; } = null!; // Người báo cáo
 
     [ForeignKey("ResolvedById")]
-    public virtual ApplicationUser? ResolvedBy { get; set; } // Admin đã xử lý
+    public virtual User? ResolvedBy { get; set; } // Admin đã xử lý
 }

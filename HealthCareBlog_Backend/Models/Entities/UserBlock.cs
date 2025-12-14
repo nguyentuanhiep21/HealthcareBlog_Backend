@@ -30,8 +30,8 @@ public class UserBlock
 
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("BlockerId")]
-    public virtual ApplicationUser Blocker { get; set; } = null!; // Người chặn
+    public virtual User Blocker { get; set; } = null!; // Người chặn
 
     [ForeignKey("BlockedId")]
-    public virtual ApplicationUser Blocked { get; set; } = null!; // Người bị chặn
+    public virtual User Blocked { get; set; } = null!; // Người bị chặn
 }

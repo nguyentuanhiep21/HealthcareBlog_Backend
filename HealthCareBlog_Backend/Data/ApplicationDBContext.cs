@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace HealthCareBlog_Backend.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<User>
     {
         public ApplicationDbContext()
         {
@@ -28,10 +28,6 @@ namespace HealthCareBlog_Backend.Data
         public DbSet<Like> Likes => Set<Like>();
         public DbSet<Comment> Comments => Set<Comment>();
 
-        // Health & AI
-        public DbSet<HealthProfile> HealthProfiles => Set<HealthProfile>();
-        public DbSet<MealSuggestion> MealSuggestions => Set<MealSuggestion>();
-
         // System
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -41,26 +37,14 @@ namespace HealthCareBlog_Backend.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // ========== APPLICATION USER CONFIGURATION ==========
-            modelBuilder.Entity<ApplicationUser>()
+            // ========== USER CONFIGURATION ==========
+            modelBuilder.Entity<User>()
                 .HasIndex(x => x.UserName)
                 .IsUnique();
 
-            modelBuilder.Entity<ApplicationUser>()
+            modelBuilder.Entity<User>()
                 .HasIndex(x => x.Email)
                 .IsUnique();
-
-            modelBuilder.Entity<ApplicationUser>()
-                .HasOne(u => u.DeactivatedByAdmin)
-                .WithMany()
-                .HasForeignKey(u => u.DeactivatedBy)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<ApplicationUser>()
-                .HasOne(u => u.BannedByAdmin)
-                .WithMany()
-                .HasForeignKey(u => u.BannedBy)
-                .OnDelete(DeleteBehavior.Restrict);
 
             // ========== FOLLOW CONFIGURATION ==========
             modelBuilder.Entity<Follow>(entity =>

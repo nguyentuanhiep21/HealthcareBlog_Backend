@@ -31,7 +31,7 @@ public class Like
 
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("UserId")]
-    public virtual ApplicationUser User { get; set; } = null!; // Người đã like
+    public virtual User User { get; set; } = null!; // Người đã like
 
     [ForeignKey("PostId")]
     public virtual Post? Post { get; set; } // Bài viết được like (nếu có)

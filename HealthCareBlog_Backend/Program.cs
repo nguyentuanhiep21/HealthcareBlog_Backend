@@ -16,7 +16,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDataProtection();
 
 // Configure Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedEmail = true;
     options.Password.RequireDigit = true;

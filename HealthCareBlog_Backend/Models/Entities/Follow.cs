@@ -32,8 +32,8 @@ public class Follow
 
     // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("FollowerId")]
-    public virtual ApplicationUser Follower { get; set; } = null!; // Người theo dõi (navigation)
+    public virtual User Follower { get; set; } = null!; // Người theo dõi (navigation)
 
     [ForeignKey("FollowingId")]
-    public virtual ApplicationUser FollowingUser { get; set; } = null!; // Người được theo dõi (navigation)
+    public virtual User FollowingUser { get; set; } = null!; // Người được theo dõi (navigation)
 }
