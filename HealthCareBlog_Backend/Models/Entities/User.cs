@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthCareBlog_Backend.Models.Entities;
@@ -11,6 +12,63 @@ namespace HealthCareBlog_Backend.Models.Entities;
 [Table("users")]
 public class User : IdentityUser
 {
+    // ========== OVERRIDE IDENTITYUSER PROPERTIES TO CONTROL COLUMN NAMES ==========
+    [Column("id")]
+    public override string? Id { get; set; }
+
+    [Column("user_name")]
+    [StringLength(256)]
+    public override string? UserName { get; set; }
+
+    [Column("full_name")]
+    [StringLength(100)]
+    public string? FullName { get; set; }
+
+    [Column("normalized_user_name")]
+    [StringLength(256)]
+    public override string? NormalizedUserName { get; set; }
+
+    [Column("email")]
+    [StringLength(256)]
+    public override string? Email { get; set; }
+
+    [Column("normalized_email")]
+    [StringLength(256)]
+    public override string? NormalizedEmail { get; set; }
+
+    [Column("email_confirmed")]
+    public override bool EmailConfirmed { get; set; }
+
+    [Column("password_hash")]
+    public override string? PasswordHash { get; set; }
+
+    [Column("security_stamp")]
+    public override string? SecurityStamp { get; set; }
+
+    [Column("concurrency_stamp")]
+    public override string? ConcurrencyStamp { get; set; }
+
+    [Column("phone_number")]
+    [StringLength(50)]
+    public override string? PhoneNumber { get; set; }
+
+    [Column("phone_number_confirmed")]
+    public override bool PhoneNumberConfirmed { get; set; }
+
+    [Column("two_factor_enabled")]
+    public override bool TwoFactorEnabled { get; set; }
+
+    [Column("lockout_end")]
+    public override DateTimeOffset? LockoutEnd { get; set; }
+
+    [Column("lockout_enabled")]
+    public override bool LockoutEnabled { get; set; }
+
+    [Column("access_failed_count")]
+    public override int AccessFailedCount { get; set; }
+
+
+
     // ========== NAVIGATION PROPERTIES ==========
     // Bài viết, bình luận, lượt thích
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();

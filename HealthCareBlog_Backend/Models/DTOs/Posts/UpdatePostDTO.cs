@@ -3,6 +3,6 @@
     public class UpdatePostDTO
     {
         public string Content { get; set; } = string.Empty; // Nội dung bài viết
-        public List<string>? ImageUrls { get; set; } // Danh sách URL ảnh
+        public string? ImageUrl { get; set; } // URL ảnh đơn (nếu có)
     }
 }
