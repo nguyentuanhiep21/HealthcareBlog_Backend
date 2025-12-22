@@ -50,7 +50,7 @@ namespace HealthCareBlog_Backend.Services
                     
                     <div style='text-align: center; margin: 30px 0;'>
                         <a href='{verificationUrl}' 
-                           style='background-color: #3498db; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
+                           style='background-color: #6EC177; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
                             Xác nhận Email
                         </a>
                     </div>
@@ -76,13 +76,13 @@ namespace HealthCareBlog_Backend.Services
             var emailSubject = "Đặt lại mật khẩu HealthCareBlog";
             var emailBody = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                    <h2 style='color: #e74c3c;'>Đặt lại mật khẩu HealthCareBlog</h2>
+                    <h2 style='color: #2c3e50;'>Đặt lại mật khẩu HealthCareBlog</h2>
                     <p>Xin chào,</p>
                     <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Để tiếp tục, vui lòng nhấp vào nút bên dưới:</p>
                     
                     <div style='text-align: center; margin: 30px 0;'>
                         <a href='{resetUrl}' 
-                           style='background-color: #e74c3c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
+                           style='background-color: #6EC177; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
                             Đặt lại mật khẩu
                         </a>
                     </div>
