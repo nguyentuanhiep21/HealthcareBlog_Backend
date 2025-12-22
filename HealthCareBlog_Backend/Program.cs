@@ -144,6 +144,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Configure CORS - Must be before other middleware
+app.UseCors("AllowFrontend");
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -157,7 +160,6 @@ if (app.Environment.IsDevelopment())
         c.DefaultModelsExpandDepth(-1);
         c.DisplayRequestDuration();
     });
-    app.UseCors("AllowFrontend");
 }
 
 app.UseStaticFiles();
