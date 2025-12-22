@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "http": {
+    "HealthCareBlog_Backend": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
