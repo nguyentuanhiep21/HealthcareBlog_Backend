@@ -3,66 +3,59 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthCareBlog_Backend.Models.Entities;
 
-/// <summary>
-/// Bảng ReportedContents - Quản lý các báo cáo vi phạm nội dung
-/// Lưu loại nội dung (Post, Comment, User...), id nội dung, lý do và trạng thái xử lý
-/// Dùng cho luồng moderation và lịch sử xử lý báo cáo
-/// </summary>
 [Table("reported_contents")]
 public class ReportedContent
 {
     [Key]
     [Column("id")]
-    public int Id { get; set; } // ID báo cáo
+    public int Id { get; set; }
 
     [Column("content_type")]
     [Required]
     [StringLength(50)]
-    public string ContentType { get; set; } = string.Empty; // Loại nội dung: "Post", "Comment", "User"
+    public string ContentType { get; set; } = string.Empty;
 
     [Column("content_id")]
     [Required]
     [StringLength(450)]
-    public string ContentId { get; set; } = string.Empty; // ID của nội dung được báo cáo
+    public string ContentId { get; set; } = string.Empty;
 
     [Column("reason")]
     [Required]
     [StringLength(100)]
-    public string Reason { get; set; } = string.Empty; // Lý do báo cáo (tên ngắn)
+    public string Reason { get; set; } = string.Empty;
 
     [Column("description")]
     [StringLength(1000)]
-    public string? Description { get; set; } // Mô tả chi tiết từ người báo cáo
+    public string? Description { get; set; }
 
     [Column("status")]
     [Required]
     [StringLength(20)]
-    public string Status { get; set; } = "Pending"; // Trạng thái: "Pending", "Resolved", "Rejected"
+    public string Status { get; set; } = "Pending";
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } // Thời điểm báo cáo
+    public DateTime CreatedAt { get; set; }
 
     [Column("resolved_at")]
-    public DateTime? ResolvedAt { get; set; } // Thời điểm xử lý xong
+    public DateTime? ResolvedAt { get; set; }
 
     [Column("admin_note")]
     [StringLength(1000)]
-    public string? AdminNote { get; set; } // Ghi chú của admin khi xử lý
+    public string? AdminNote { get; set; }
 
-    // ========== FOREIGN KEYS ==========
     [Column("reporter_id")]
     [StringLength(450)]
     [Required]
-    public string ReporterId { get; set; } = string.Empty; // ID người báo cáo
+    public string ReporterId { get; set; } = string.Empty;
 
     [Column("resolved_by_id")]
     [StringLength(450)]
-    public string? ResolvedById { get; set; } // ID admin xử lý (nếu có)
+    public string? ResolvedById { get; set; }
 
-    // ========== NAVIGATION PROPERTIES ==========
     [ForeignKey("ReporterId")]
-    public virtual User Reporter { get; set; } = null!; // Người báo cáo
+    public virtual User Reporter { get; set; } = null!;
 
     [ForeignKey("ResolvedById")]
-    public virtual User? ResolvedBy { get; set; } // Admin đã xử lý
+    public virtual User? ResolvedBy { get; set; }
 }

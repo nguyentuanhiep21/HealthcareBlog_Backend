@@ -18,11 +18,12 @@ namespace HealthCareBlog_Backend.Data
         // ========== DBSETS ==========
         // User & Social
         public DbSet<Follow> Follows => Set<Follow>();
-        public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
+        public DbSet<SavedPost> SavedPosts => Set<SavedPost>();
 
         // Post & Content
         public DbSet<Post> Posts => Set<Post>();
-        public DbSet<Like> Likes => Set<Like>();
+        public DbSet<LikePost> LikePosts => Set<LikePost>();
+        public DbSet<LikeComment> LikeComments => Set<LikeComment>();
         public DbSet<Comment> Comments => Set<Comment>();
 
         // System
@@ -43,36 +44,45 @@ namespace HealthCareBlog_Backend.Data
                 .HasIndex(x => x.Email)
                 .IsUnique();
 
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.Property(e => e.FollowerCount).HasDefaultValue(0);
+                entity.Property(e => e.FollowingCount).HasDefaultValue(0);
+            });
+
             // ========== FOLLOW CONFIGURATION ==========
             modelBuilder.Entity<Follow>(entity =>
             {
                 entity.HasOne(f => f.Follower)
                     .WithMany(u => u.Following)
                     .HasForeignKey(f => f.FollowerId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasOne(f => f.FollowingUser)
                     .WithMany(u => u.Followers)
                     .HasForeignKey(f => f.FollowingId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasIndex(e => new { e.FollowerId, e.FollowingId }).IsUnique();
             });
 
-            // ========== USER BLOCK CONFIGURATION ==========
-            modelBuilder.Entity<UserBlock>(entity =>
+            // ========== SAVED POST CONFIGURATION ==========
+            modelBuilder.Entity<SavedPost>(entity =>
             {
-                entity.HasOne(ub => ub.Blocker)
-                    .WithMany(u => u.BlockedUsers)
-                    .HasForeignKey(ub => ub.BlockerId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(sp => sp.User)
+                    .WithMany(u => u.SavedPosts)
+                    .HasForeignKey(sp => sp.UserId)
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
-                entity.HasOne(ub => ub.Blocked)
-                    .WithMany(u => u.BlockedByUsers)
-                    .HasForeignKey(ub => ub.BlockedId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(sp => sp.Post)
+                    .WithMany(p => p.SavedByUsers)
+                    .HasForeignKey(sp => sp.PostId)
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
-                entity.HasIndex(e => new { e.BlockerId, e.BlockedId }).IsUnique();
+                entity.HasIndex(e => new { e.UserId, e.PostId }).IsUnique();
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.PostId);
+                entity.HasIndex(e => e.CreatedAt);
             });
 
             // ========== POST CONFIGURATION ==========
@@ -81,7 +91,7 @@ namespace HealthCareBlog_Backend.Data
                 entity.HasOne(p => p.User)
                     .WithMany(u => u.Posts)
                     .HasForeignKey(p => p.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasIndex(e => e.UserId);
                 entity.HasIndex(e => e.CreatedAt);
@@ -90,44 +100,61 @@ namespace HealthCareBlog_Backend.Data
                 entity.Property(e => e.CommentCount).HasDefaultValue(0);
             });
 
-            // ========== LIKE CONFIGURATION ==========
-            modelBuilder.Entity<Like>(entity =>
-            {
-                entity.HasOne(l => l.User)
-                    .WithMany(u => u.Likes)
-                    .HasForeignKey(l => l.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(l => l.Post)
-                    .WithMany(p => p.Likes)
-                    .HasForeignKey(l => l.PostId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(l => l.Comment)
-                    .WithMany(c => c.Likes)
-                    .HasForeignKey(l => l.CommentId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasIndex(e => new { e.UserId, e.PostId, e.CommentId }).IsUnique();
-            });
-
             // ========== COMMENT CONFIGURATION ==========
             modelBuilder.Entity<Comment>(entity =>
             {
                 entity.HasOne(c => c.User)
                     .WithMany(u => u.Comments)
                     .HasForeignKey(c => c.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasOne(c => c.Post)
                     .WithMany(p => p.Comments)
                     .HasForeignKey(c => c.PostId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasIndex(e => e.PostId);
                 entity.HasIndex(e => e.UserId);
 
                 entity.Property(e => e.LikeCount).HasDefaultValue(0);
+            });
+
+            // ========== LIKE POST CONFIGURATION ==========
+            modelBuilder.Entity<LikePost>(entity =>
+            {
+                entity.HasOne(l => l.User)
+                    .WithMany(u => u.LikePosts)
+                    .HasForeignKey(l => l.UserId)
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
+
+                entity.HasOne(l => l.Post)
+                    .WithMany(p => p.Likes)
+                    .HasForeignKey(l => l.PostId)
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
+
+                entity.HasIndex(e => new { e.UserId, e.PostId }).IsUnique();
+                entity.HasIndex(e => e.PostId);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.CreatedAt);
+            });
+
+            // ========== LIKE COMMENT CONFIGURATION ==========
+            modelBuilder.Entity<LikeComment>(entity =>
+            {
+                entity.HasOne(l => l.User)
+                    .WithMany(u => u.LikeComments)
+                    .HasForeignKey(l => l.UserId)
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
+
+                entity.HasOne(l => l.Comment)
+                    .WithMany(c => c.Likes)
+                    .HasForeignKey(l => l.CommentId)
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
+
+                entity.HasIndex(e => new { e.UserId, e.CommentId }).IsUnique();
+                entity.HasIndex(e => e.CommentId);
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.CreatedAt);
             });
 
             // ========== NOTIFICATION CONFIGURATION ==========
@@ -136,22 +163,22 @@ namespace HealthCareBlog_Backend.Data
                 entity.HasOne(n => n.User)
                     .WithMany(u => u.ReceivedNotifications)
                     .HasForeignKey(n => n.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasOne(n => n.Actor)
                     .WithMany()
                     .HasForeignKey(n => n.ActorId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasOne(n => n.Post)
                     .WithMany()
                     .HasForeignKey(n => n.PostId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasOne(n => n.Comment)
                     .WithMany()
                     .HasForeignKey(n => n.CommentId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict); // Xử lý trong code
 
                 entity.HasIndex(e => e.UserId);
                 entity.HasIndex(e => e.IsRead);
@@ -164,7 +191,7 @@ namespace HealthCareBlog_Backend.Data
                 entity.HasOne(al => al.Admin)
                     .WithMany()
                     .HasForeignKey(al => al.AdminId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict); // Giữ lại audit logs
 
                 entity.HasIndex(e => e.AdminId);
                 entity.HasIndex(e => new { e.EntityType, e.EntityId });
@@ -176,12 +203,12 @@ namespace HealthCareBlog_Backend.Data
                 entity.HasOne(rc => rc.Reporter)
                     .WithMany(u => u.Reports)
                     .HasForeignKey(rc => rc.ReporterId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict); // Giữ lại reports
 
                 entity.HasOne(rc => rc.ResolvedBy)
                     .WithMany()
                     .HasForeignKey(rc => rc.ResolvedById)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict); // Giữ lại reports
 
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => new { e.ContentType, e.ContentId });

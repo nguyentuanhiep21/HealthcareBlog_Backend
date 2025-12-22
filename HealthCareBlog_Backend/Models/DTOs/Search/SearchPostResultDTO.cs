@@ -1,15 +1,13 @@
-﻿using HealthCareBlog_Backend.Models.DTOs.Comments;
-
-namespace HealthCareBlog_Backend.Models.DTOs.Posts
+namespace HealthCareBlog_Backend.Models.DTOs.Search
 {
-    public class PostDetailDTO
+    public class SearchPostResultDTO
     {
         public int Id { get; set; }
         public string AuthorId { get; set; } = string.Empty;
+        public string AuthorName { get; set; } = string.Empty;
+        public DateTime UploadTime { get; set; }
         public string Content { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
         public string? ImageUrl { get; set; }
-        public List<ViewCommentDTO> Comments { get; set; } = new List<ViewCommentDTO>();
         public int LikeCount { get; set; }
         public int CommentCount { get; set; }
         public bool IsLikedByCurrentUser { get; set; }

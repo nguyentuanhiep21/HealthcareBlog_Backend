@@ -43,5 +43,6 @@ public class Post
   public virtual User User { get; set; } = null!; // Tác giả
 
   public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
-  public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+  public virtual ICollection<LikePost> Likes { get; set; } = new List<LikePost>();
+  public virtual ICollection<SavedPost> SavedByUsers { get; set; } = new List<SavedPost>();
 }

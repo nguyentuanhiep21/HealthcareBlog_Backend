@@ -16,6 +16,22 @@ namespace HealthCareBlog_Backend.Services
             _context = context;
         }
 
+        public async Task<List<ViewCommentDTO>> ViewCommentsAsync(string? UserId, int postId, int page = 1, int pageSize = 10)
+        {
+            // Validate parameters
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100; // Giới hạn tối đa 100 comments mỗi lần
+            var comments = await _context.Comments
+                .Where(c => c.PostId == postId)
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize) // Bỏ qua các comments của các trang trước
+                .Take(pageSize) // Lấy số lượng comments theo pageSize
+                .ToListAsync();
+            var commentDTOs = comments.Select(c => c.ToViewCommentDTO(UserId)).ToList();
+            return commentDTOs;
+        }
+
         public async Task<CommentDetailDTO> CreateCommentAsync(string AuthorId, CreateCommentDTO createCommentDTO)
         {
             if (createCommentDTO == null)
@@ -69,6 +85,24 @@ namespace HealthCareBlog_Backend.Services
                 throw new UnauthorizedException("You are not authorized to delete this comment.");
             }
 
+            var commentLikes = await _context.LikeComments
+                .Where(l => l.CommentId == commentId)
+                .ToListAsync();
+            
+            if (commentLikes.Any())
+            {
+                _context.LikeComments.RemoveRange(commentLikes);
+            }
+
+            var notifications = await _context.Notifications
+                .Where(n => n.CommentId == commentId)
+                .ToListAsync();
+            
+            if (notifications.Any())
+            {
+                _context.Notifications.RemoveRange(notifications);
+            }
+
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
             return true;
@@ -83,7 +117,7 @@ namespace HealthCareBlog_Backend.Services
                 throw new NotFoundException("Comment not found.");
             }
 
-            var existingLike = await _context.Likes
+            var existingLike = await _context.LikeComments
                 .FirstOrDefaultAsync(l => l.UserId == UserId && l.CommentId == commentId);
 
             if (existingLike != null)
@@ -91,15 +125,14 @@ namespace HealthCareBlog_Backend.Services
                 throw new BadRequestException("You have already liked this comment.");
             }
 
-            var newLike = new Like
+            var newLike = new LikeComment
             {
                 UserId = UserId,
                 CommentId = commentId,
-                PostId = null, 
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Likes.Add(newLike);
+            _context.LikeComments.Add(newLike);
             comment.LikeCount++;
             await _context.SaveChangesAsync();
             return true;
@@ -114,7 +147,7 @@ namespace HealthCareBlog_Backend.Services
                 throw new NotFoundException("Comment not found.");
             }
 
-            var existingLike = await _context.Likes
+            var existingLike = await _context.LikeComments
                 .FirstOrDefaultAsync(l => l.UserId == UserId && l.CommentId == commentId);
 
             if (existingLike == null)
@@ -122,7 +155,7 @@ namespace HealthCareBlog_Backend.Services
                 throw new BadRequestException("You have not liked this comment yet.");
             }
 
-            _context.Likes.Remove(existingLike);
+            _context.LikeComments.Remove(existingLike);
 
             if (comment.LikeCount > 0)
             {

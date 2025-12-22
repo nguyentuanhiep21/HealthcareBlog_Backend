@@ -43,5 +43,5 @@ public class Comment
   [ForeignKey("UserId")]
   public virtual User User { get; set; } = null!; // Tác giả bình luận
 
-  public virtual ICollection<Like> Likes { get; set; } = new List<Like>(); // Lượt thích cho bình luận
+  public virtual ICollection<LikeComment> Likes { get; set; } = new List<LikeComment>(); // Lượt thích cho bình luận
 }

@@ -3,35 +3,29 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthCareBlog_Backend.Models.Entities;
 
-/// <summary>
-/// Bảng UserBlocks - Quản lý hành động chặn giữa người dùng
-/// Lưu user nào chặn user nào, dùng để ngăn chặn tương tác và hiển thị thông tin chặn
-/// </summary>
-[Table("user_blocks")]
-public class UserBlock
+[Table("saved_posts")]
+public class SavedPost
 {
     [Key]
     [Column("id")]
-    public int Id { get; set; } // ID của hành động chặn
+    public int Id { get; set; } // ID của hành động lưu bài viết
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } // Thời gian chặn
+    public DateTime CreatedAt { get; set; } // Thời gian lưu bài viết
 
-    // ========== FOREIGN KEYS ==========
-    [Column("blocker_id")]
+    [Column("user_id")]
     [StringLength(450)]
     [Required]
-    public string BlockerId { get; set; } = string.Empty; // ID người chặn
+    public string UserId { get; set; } = string.Empty; // ID người dùng lưu bài viết
 
-    [Column("blocked_id")]
-    [StringLength(450)]
+    [Column("post_id")]
     [Required]
-    public string BlockedId { get; set; } = string.Empty; // ID người bị chặn
+    public int PostId { get; set; } // ID bài viết được lưu
 
     // ========== NAVIGATION PROPERTIES ==========
-    [ForeignKey("BlockerId")]
-    public virtual User Blocker { get; set; } = null!; // Người chặn
+    [ForeignKey("UserId")]
+    public virtual User User { get; set; } = null!; // Người dùng đã lưu bài viết
 
-    [ForeignKey("BlockedId")]
-    public virtual User Blocked { get; set; } = null!; // Người bị chặn
+    [ForeignKey("PostId")]
+    public virtual Post Post { get; set; } = null!; // Bài viết được lưu
 }

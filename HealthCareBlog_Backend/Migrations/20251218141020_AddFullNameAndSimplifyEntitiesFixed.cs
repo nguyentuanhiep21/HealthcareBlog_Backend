@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HealthCareBlog_Backend.Migrations
 {
     /// <inheritdoc />
-    public partial class AddFullNameAndSimplifyEntities : Migration
+    public partial class AddFullNameAndSimplifyEntitiesFixed : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,12 +16,12 @@ namespace HealthCareBlog_Backend.Migrations
                 table: "comments");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_comments_AspNetUsers_user_id",
+                name: "FK_comments_comments_parent_comment_id",
                 table: "comments");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_comments_comments_parent_comment_id",
-                table: "comments");
+                name: "FK_likes_AspNetUsers_user_id",
+                table: "likes");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_likes_comments_comment_id",
@@ -175,19 +175,9 @@ namespace HealthCareBlog_Backend.Migrations
                 newName: "user_name");
 
             migrationBuilder.RenameColumn(
-                name: "TwoFactorEnabled",
-                table: "AspNetUsers",
-                newName: "two_factor_enabled");
-
-            migrationBuilder.RenameColumn(
                 name: "SecurityStamp",
                 table: "AspNetUsers",
                 newName: "security_stamp");
-
-            migrationBuilder.RenameColumn(
-                name: "PhoneNumberConfirmed",
-                table: "AspNetUsers",
-                newName: "phone_number_confirmed");
 
             migrationBuilder.RenameColumn(
                 name: "PhoneNumber",
@@ -210,16 +200,6 @@ namespace HealthCareBlog_Backend.Migrations
                 newName: "normalized_email");
 
             migrationBuilder.RenameColumn(
-                name: "LockoutEnd",
-                table: "AspNetUsers",
-                newName: "lockout_end");
-
-            migrationBuilder.RenameColumn(
-                name: "LockoutEnabled",
-                table: "AspNetUsers",
-                newName: "lockout_enabled");
-
-            migrationBuilder.RenameColumn(
                 name: "EmailConfirmed",
                 table: "AspNetUsers",
                 newName: "email_confirmed");
@@ -228,11 +208,6 @@ namespace HealthCareBlog_Backend.Migrations
                 name: "ConcurrencyStamp",
                 table: "AspNetUsers",
                 newName: "concurrency_stamp");
-
-            migrationBuilder.RenameColumn(
-                name: "AccessFailedCount",
-                table: "AspNetUsers",
-                newName: "access_failed_count");
 
             migrationBuilder.AlterColumn<DateTime>(
                 name: "created_at",
@@ -330,6 +305,13 @@ namespace HealthCareBlog_Backend.Migrations
                 maxLength: 100,
                 nullable: true);
 
+            migrationBuilder.AddColumn<bool>(
+                name: "is_available",
+                table: "AspNetUsers",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
             migrationBuilder.CreateIndex(
                 name: "IX_reported_contents_reporter_id",
                 table: "reported_contents",
@@ -362,20 +344,19 @@ namespace HealthCareBlog_Backend.Migrations
                 filter: "[normalized_user_name] IS NOT NULL");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_comments_AspNetUsers_user_id",
-                table: "comments",
+                name: "FK_likes_AspNetUsers_user_id",
+                table: "likes",
                 column: "user_id",
                 principalTable: "AspNetUsers",
                 principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_likes_comments_comment_id",
                 table: "likes",
                 column: "comment_id",
                 principalTable: "comments",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
+                principalColumn: "id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_likes_posts_post_id",
@@ -398,8 +379,8 @@ namespace HealthCareBlog_Backend.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_comments_AspNetUsers_user_id",
-                table: "comments");
+                name: "FK_likes_AspNetUsers_user_id",
+                table: "likes");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_likes_comments_comment_id",
@@ -441,6 +422,10 @@ namespace HealthCareBlog_Backend.Migrations
                 name: "full_name",
                 table: "AspNetUsers");
 
+            migrationBuilder.DropColumn(
+                name: "is_available",
+                table: "AspNetUsers");
+
             migrationBuilder.RenameColumn(
                 name: "email",
                 table: "AspNetUsers",
@@ -457,19 +442,9 @@ namespace HealthCareBlog_Backend.Migrations
                 newName: "UserName");
 
             migrationBuilder.RenameColumn(
-                name: "two_factor_enabled",
-                table: "AspNetUsers",
-                newName: "TwoFactorEnabled");
-
-            migrationBuilder.RenameColumn(
                 name: "security_stamp",
                 table: "AspNetUsers",
                 newName: "SecurityStamp");
-
-            migrationBuilder.RenameColumn(
-                name: "phone_number_confirmed",
-                table: "AspNetUsers",
-                newName: "PhoneNumberConfirmed");
 
             migrationBuilder.RenameColumn(
                 name: "phone_number",
@@ -492,16 +467,6 @@ namespace HealthCareBlog_Backend.Migrations
                 newName: "NormalizedEmail");
 
             migrationBuilder.RenameColumn(
-                name: "lockout_end",
-                table: "AspNetUsers",
-                newName: "LockoutEnd");
-
-            migrationBuilder.RenameColumn(
-                name: "lockout_enabled",
-                table: "AspNetUsers",
-                newName: "LockoutEnabled");
-
-            migrationBuilder.RenameColumn(
                 name: "email_confirmed",
                 table: "AspNetUsers",
                 newName: "EmailConfirmed");
@@ -510,11 +475,6 @@ namespace HealthCareBlog_Backend.Migrations
                 name: "concurrency_stamp",
                 table: "AspNetUsers",
                 newName: "ConcurrencyStamp");
-
-            migrationBuilder.RenameColumn(
-                name: "access_failed_count",
-                table: "AspNetUsers",
-                newName: "AccessFailedCount");
 
             migrationBuilder.AlterColumn<DateTime>(
                 name: "created_at",
@@ -792,20 +752,20 @@ namespace HealthCareBlog_Backend.Migrations
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_comments_AspNetUsers_user_id",
-                table: "comments",
-                column: "user_id",
-                principalTable: "AspNetUsers",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
                 name: "FK_comments_comments_parent_comment_id",
                 table: "comments",
                 column: "parent_comment_id",
                 principalTable: "comments",
                 principalColumn: "id",
                 onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_likes_AspNetUsers_user_id",
+                table: "likes",
+                column: "user_id",
+                principalTable: "AspNetUsers",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_likes_comments_comment_id",

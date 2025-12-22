@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using HealthCareBlog_Backend.Data;
 using HealthCareBlog_Backend.Models.Entities;
+using HealthCareBlog_Backend.Services;
+using HealthCareBlog_Backend.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
@@ -34,8 +36,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddRoles<IdentityRole>()
 .AddDefaultTokenProviders();
 
-// Configure JWT Authentication (nếu cần)
-/*
+// Configure JWT authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 builder.Services.AddAuthentication(options =>
 {
@@ -56,7 +57,6 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 });
-*/
 
 builder.Services.AddAuthorization();
 
@@ -75,7 +75,6 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // JWT Authentication
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -113,9 +112,14 @@ builder.Services.AddSession(options =>
 });
 
 // Register Services (thêm các services của bạn ở đây)
-// builder.Services.AddScoped<IEmailService, EmailService>();
-// builder.Services.AddScoped<IUserService, UserService>();
-// builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<ISavedPostService, SavedPostService>();
+builder.Services.AddScoped<IFollowService, FollowService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Configure Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -129,7 +133,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
             "http://localhost:5173",
             "http://localhost:5174",
-            "http://localhost:5175"
+            "http://localhost:5175",
+            "http://localhost:3000"
             )
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -155,6 +160,7 @@ if (app.Environment.IsDevelopment())
     app.UseCors("AllowFrontend");
 }
 
+app.UseStaticFiles();
 app.UseSession();
 app.UseHttpsRedirection();
 app.UseAuthentication();

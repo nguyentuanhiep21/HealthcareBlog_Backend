@@ -4,6 +4,7 @@ using HealthCareBlog_Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HealthCareBlog_Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251221134641_AddUserProfileFields")]
+    partial class AddUserProfileFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -90,7 +93,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("EntityType", "EntityId");
 
-                    b.ToTable("audit_logs", (string)null);
+                    b.ToTable("audit_logs");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Comment", b =>
@@ -134,7 +137,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("comments", (string)null);
+                    b.ToTable("comments");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Follow", b =>
@@ -169,7 +172,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("FollowerId", "FollowingId")
                         .IsUnique();
 
-                    b.ToTable("follows", (string)null);
+                    b.ToTable("follows");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.LikeComment", b =>
@@ -206,7 +209,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("UserId", "CommentId")
                         .IsUnique();
 
-                    b.ToTable("like_comments", (string)null);
+                    b.ToTable("like_comments");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.LikePost", b =>
@@ -243,7 +246,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("UserId", "PostId")
                         .IsUnique();
 
-                    b.ToTable("like_posts", (string)null);
+                    b.ToTable("like_posts");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Notification", b =>
@@ -306,7 +309,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId", "IsRead");
 
-                    b.ToTable("notifications", (string)null);
+                    b.ToTable("notifications");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Post", b =>
@@ -356,7 +359,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("posts", (string)null);
+                    b.ToTable("posts");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.ReportedContent", b =>
@@ -431,7 +434,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("ContentType", "ContentId");
 
-                    b.ToTable("reported_contents", (string)null);
+                    b.ToTable("reported_contents");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.SavedPost", b =>
@@ -468,7 +471,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("UserId", "PostId")
                         .IsUnique();
 
-                    b.ToTable("saved_posts", (string)null);
+                    b.ToTable("saved_posts");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.User", b =>

@@ -4,6 +4,7 @@ using HealthCareBlog_Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HealthCareBlog_Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251218141020_AddFullNameAndSimplifyEntitiesFixed")]
+    partial class AddFullNameAndSimplifyEntitiesFixed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -90,7 +93,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("EntityType", "EntityId");
 
-                    b.ToTable("audit_logs", (string)null);
+                    b.ToTable("audit_logs");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Comment", b =>
@@ -134,7 +137,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("comments", (string)null);
+                    b.ToTable("comments");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Follow", b =>
@@ -169,10 +172,10 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("FollowerId", "FollowingId")
                         .IsUnique();
 
-                    b.ToTable("follows", (string)null);
+                    b.ToTable("follows");
                 });
 
-            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.LikeComment", b =>
+            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Like", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -181,7 +184,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CommentId")
+                    b.Property<int?>("CommentId")
                         .HasColumnType("int")
                         .HasColumnName("comment_id");
 
@@ -189,40 +192,7 @@ namespace HealthCareBlog_Backend.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "CommentId")
-                        .IsUnique();
-
-                    b.ToTable("like_comments", (string)null);
-                });
-
-            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.LikePost", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at");
-
-                    b.Property<int>("PostId")
+                    b.Property<int?>("PostId")
                         .HasColumnType("int")
                         .HasColumnName("post_id");
 
@@ -234,16 +204,15 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt");
+                    b.HasIndex("CommentId");
 
                     b.HasIndex("PostId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "PostId", "CommentId")
+                        .IsUnique()
+                        .HasFilter("[post_id] IS NOT NULL AND [comment_id] IS NOT NULL");
 
-                    b.HasIndex("UserId", "PostId")
-                        .IsUnique();
-
-                    b.ToTable("like_posts", (string)null);
+                    b.ToTable("likes");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Notification", b =>
@@ -306,7 +275,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId", "IsRead");
 
-                    b.ToTable("notifications", (string)null);
+                    b.ToTable("notifications");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Post", b =>
@@ -356,7 +325,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("posts", (string)null);
+                    b.ToTable("posts");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.ReportedContent", b =>
@@ -431,44 +400,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("ContentType", "ContentId");
 
-                    b.ToTable("reported_contents", (string)null);
-                });
-
-            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.SavedPost", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int")
-                        .HasColumnName("post_id");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("PostId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "PostId")
-                        .IsUnique();
-
-                    b.ToTable("saved_posts", (string)null);
+                    b.ToTable("reported_contents");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.User", b =>
@@ -479,16 +411,6 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
-
-                    b.Property<string>("AvatarUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("avatar_url");
-
-                    b.Property<string>("Bio")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("bio");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -504,23 +426,6 @@ namespace HealthCareBlog_Backend.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("email_confirmed");
 
-                    b.Property<string>("FirstName")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("first_name");
-
-                    b.Property<int>("FollowerCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0)
-                        .HasColumnName("follower_count");
-
-                    b.Property<int>("FollowingCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0)
-                        .HasColumnName("following_count");
-
                     b.Property<string>("FullName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
@@ -529,11 +434,6 @@ namespace HealthCareBlog_Backend.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit")
                         .HasColumnName("is_available");
-
-                    b.Property<string>("LastName")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("last_name");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -562,10 +462,6 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<int>("PostCount")
-                        .HasColumnType("int")
-                        .HasColumnName("post_count");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)")
@@ -598,6 +494,41 @@ namespace HealthCareBlog_Backend.Migrations
                         .HasFilter("[user_name] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.UserBlock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BlockedId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("blocked_id");
+
+                    b.Property<string>("BlockerId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("blocker_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlockedId");
+
+                    b.HasIndex("BlockerId", "BlockedId")
+                        .IsUnique();
+
+                    b.ToTable("user_blocks");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -755,7 +686,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "User")
@@ -788,38 +719,25 @@ namespace HealthCareBlog_Backend.Migrations
                     b.Navigation("FollowingUser");
                 });
 
-            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.LikeComment", b =>
+            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Like", b =>
                 {
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.Comment", "Comment")
                         .WithMany("Likes")
                         .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("HealthCareBlog_Backend.Models.Entities.Post", "Post")
+                        .WithMany("Likes")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "User")
-                        .WithMany("LikeComments")
+                        .WithMany("Likes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Comment");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.LikePost", b =>
-                {
-                    b.HasOne("HealthCareBlog_Backend.Models.Entities.Post", "Post")
-                        .WithMany("Likes")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "User")
-                        .WithMany("LikePosts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
 
                     b.Navigation("Post");
 
@@ -846,7 +764,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "User")
                         .WithMany("ReceivedNotifications")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Actor");
@@ -863,7 +781,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "User")
                         .WithMany("Posts")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -887,23 +805,23 @@ namespace HealthCareBlog_Backend.Migrations
                     b.Navigation("ResolvedBy");
                 });
 
-            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.SavedPost", b =>
+            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.UserBlock", b =>
                 {
-                    b.HasOne("HealthCareBlog_Backend.Models.Entities.Post", "Post")
-                        .WithMany("SavedByUsers")
-                        .HasForeignKey("PostId")
+                    b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "Blocked")
+                        .WithMany("BlockedByUsers")
+                        .HasForeignKey("BlockedId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "User")
-                        .WithMany("SavedPosts")
-                        .HasForeignKey("UserId")
+                    b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "Blocker")
+                        .WithMany("BlockedUsers")
+                        .HasForeignKey("BlockerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Post");
+                    b.Navigation("Blocked");
 
-                    b.Navigation("User");
+                    b.Navigation("Blocker");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -967,29 +885,27 @@ namespace HealthCareBlog_Backend.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Likes");
-
-                    b.Navigation("SavedByUsers");
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.User", b =>
                 {
+                    b.Navigation("BlockedByUsers");
+
+                    b.Navigation("BlockedUsers");
+
                     b.Navigation("Comments");
 
                     b.Navigation("Followers");
 
                     b.Navigation("Following");
 
-                    b.Navigation("LikeComments");
-
-                    b.Navigation("LikePosts");
+                    b.Navigation("Likes");
 
                     b.Navigation("Posts");
 
                     b.Navigation("ReceivedNotifications");
 
                     b.Navigation("Reports");
-
-                    b.Navigation("SavedPosts");
                 });
 #pragma warning restore 612, 618
         }
