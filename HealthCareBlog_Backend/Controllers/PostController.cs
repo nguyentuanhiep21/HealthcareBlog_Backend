@@ -2,6 +2,7 @@ using HealthCareBlog_Backend.Extensions;
 using HealthCareBlog_Backend.Models.DTOs.Posts;
 using HealthCareBlog_Backend.Models.DTOs.Reports;
 using HealthCareBlog_Backend.Services.Interfaces;
+using HealthCareBlog_Backend.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -29,18 +30,33 @@ namespace HealthCareBlog_Backend.Controllers
             return Ok(posts);
         }
 
-        [HttpPost("{userId}")]
+        [HttpPost]
         [Authorize]
         public async Task<ActionResult<PostDetailDTO>> CreatePost([FromBody] CreatePostDTO createPostDTO)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                }
 
-            var post = await _postService.CreatePostAsync(userId, createPostDTO);
-            return Ok(post);
+                var post = await _postService.CreatePostAsync(userId, createPostDTO);
+                return Ok(new { message = "Đăng bài thành công.", data = post, success = true });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đăng bài. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPut("{postId}")]

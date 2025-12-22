@@ -71,7 +71,6 @@ namespace HealthCareBlog_Backend.Controllers
             }
             catch (BadRequestException ex)
             {
-                // Nếu email đã được xác thực, vẫn trả về success
                 if (ex.Message.Contains("already verified"))
                 {
                     return Ok(new { message = "Email đã được xác thực trước đó. Bạn có thể đăng nhập ngay!", success = true });
@@ -91,8 +90,15 @@ namespace HealthCareBlog_Backend.Controllers
         [HttpPost("resend-verification")]
         public async Task<ActionResult> ResendVerificationEmail([FromBody] ForgotPasswordDTO model)
         {
-            var result = await _userService.ResendVerificationEmailAsync(model.Email);
-            return Ok(new { message = "Verification email sent successfully.", success = result });
+            try
+            {
+                var result = await _userService.ResendVerificationEmailAsync(model.Email);
+                return Ok(new { message = "Verification email sent successfully.", success = result });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi gửi email. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPost("forgot-password")]
@@ -105,7 +111,6 @@ namespace HealthCareBlog_Backend.Controllers
             }
             catch (Exception)
             {
-                // Vẫn trả về success để không lộ thông tin email có tồn tại hay không
                 return Ok(new { message = "If the email exists, a password reset link has been sent.", success = true });
             }
         }
@@ -141,11 +146,11 @@ namespace HealthCareBlog_Backend.Controllers
                 var userId = User.GetUserId();
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                    return Unauthorized(new { message = "User not authenticated.", success = false });
                 }
 
                 var result = await _userService.ChangePasswordAsync(userId, changePasswordDTO);
-                return Ok(new { message = "Đổi mật khẩu thành công.", success = result });
+                return Ok(new { message = "Đổi mật khẩu thành công!", success = result });
             }
             catch (BadRequestException ex)
             {
@@ -167,76 +172,150 @@ namespace HealthCareBlog_Backend.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var currentUserId = User.GetUserId();
-            var profile = await _userService.GetUserProfileAsync(currentUserId, userId, page, pageSize);
-            return Ok(profile);
+            try
+            {
+                var currentUserId = User.GetUserId();
+                var profile = await _userService.GetUserProfileAsync(currentUserId, userId, page, pageSize);
+                return Ok(profile);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpGet("account")]
         [Authorize]
         public async Task<ActionResult<ViewAccountDTO>> GetAccountInfo()
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "User not authenticated.", success = false });
+                }
 
-            var account = await _userService.GetAccountInfoAsync(userId);
-            return Ok(account);
+                var account = await _userService.GetAccountInfoAsync(userId);
+                return Ok(account);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPut("account")]
         [Authorize]
         public async Task<ActionResult<ViewAccountDTO>> UpdateAccountInfo([FromBody] UpdateAccountDTO updateAccountDTO)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "User not authenticated.", success = false });
+                }
 
-            var account = await _userService.UpdateAccountInfoAsync(userId, updateAccountDTO);
-            return Ok(new { message = "Account updated successfully.", data = account });
+                var account = await _userService.UpdateAccountInfoAsync(userId, updateAccountDTO);
+                return Ok(new { message = "Account updated successfully.", data = account });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpDelete]
         [Authorize]
         public async Task<ActionResult> DeleteAccount()
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "User not authenticated.", success = false });
+                }
 
-            var result = await _userService.DeleteUserAsync(userId);
-            return Ok(new { message = "Account deleted successfully.", success = result });
+                var result = await _userService.DeleteUserAsync(userId);
+                return Ok(new { message = "Account deleted successfully.", success = result });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpDelete("{userId}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteUser(string userId)
         {
-            var result = await _userService.DeleteUserAsync(userId);
-            return Ok(new { message = "User deleted successfully.", success = result });
+            try
+            {
+                var result = await _userService.DeleteUserAsync(userId);
+                return Ok(new { message = "User deleted successfully.", success = result });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPost("{userId}/report")]
         [Authorize]
         public async Task<ActionResult<ViewReportDTO>> ReportUser(string userId, [FromBody] CreateReportDTO createReportDTO)
         {
-            var reporterId = User.GetUserId();
-            if (string.IsNullOrEmpty(reporterId))
+            try
             {
-                return Unauthorized("User not authenticated.");
+                var reporterId = User.GetUserId();
+                if (string.IsNullOrEmpty(reporterId))
+                {
+                    return Unauthorized(new { message = "User not authenticated.", success = false });
+                }
+
+                createReportDTO.ContentType = "User";
+                createReportDTO.ContentId = userId;
+
+                var report = await _reportService.CreateReportAsync(reporterId, createReportDTO);
+                return Ok(new { message = "User reported successfully.", data = report });
             }
-
-            createReportDTO.ContentType = "User";
-            createReportDTO.ContentId = userId;
-
-            var report = await _reportService.CreateReportAsync(reporterId, createReportDTO);
-            return Ok(new { message = "User reported successfully.", data = report });
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
     }
 }

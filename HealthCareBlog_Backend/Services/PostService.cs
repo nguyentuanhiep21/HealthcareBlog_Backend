@@ -75,16 +75,25 @@ namespace HealthCareBlog_Backend.Services
 
         public async Task<PostDetailDTO> CreatePostAsync(string AuthorId, CreatePostDTO createPostDTO)
         {
+            Console.WriteLine($"[CreatePostAsync] Starting - AuthorId: {AuthorId}");
+            
             if (createPostDTO == null)
             {
-                throw new BadRequestException("Invalid data.");
+                Console.WriteLine("[CreatePostAsync] Error: createPostDTO is null");
+                throw new BadRequestException("Dữ liệu không hợp lệ.");
             }
+
+            Console.WriteLine($"[CreatePostAsync] Content length: {createPostDTO.Content?.Length ?? 0}");
+            Console.WriteLine($"[CreatePostAsync] ImageUrl length: {createPostDTO.ImageUrl?.Length ?? 0}");
 
             var user = await _context.Users.FindAsync(AuthorId);
             if (user == null)
             {
-                throw new NotFoundException("User not found.");
+                Console.WriteLine($"[CreatePostAsync] Error: User not found - {AuthorId}");
+                throw new NotFoundException("Không tìm thấy người dùng.");
             }
+
+            Console.WriteLine($"[CreatePostAsync] User found: {user.FullName}");
 
             var newPost = new Post
             {
@@ -96,9 +105,14 @@ namespace HealthCareBlog_Backend.Services
                 CommentCount = 0
             };
             
+            Console.WriteLine("[CreatePostAsync] Adding post to context...");
             _context.Posts.Add(newPost);
             user.PostCount++;
+            
+            Console.WriteLine("[CreatePostAsync] Saving changes...");
             await _context.SaveChangesAsync();
+            
+            Console.WriteLine($"[CreatePostAsync] Success - Post ID: {newPost.Id}");
             return newPost.ToPostDetailDTO(AuthorId);
         }
 
