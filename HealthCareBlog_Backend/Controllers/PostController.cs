@@ -29,7 +29,7 @@ namespace HealthCareBlog_Backend.Controllers
             return Ok(posts);
         }
 
-        [HttpPost]
+        [HttpPost("{userId}")]
         [Authorize]
         public async Task<ActionResult<PostDetailDTO>> CreatePost([FromBody] CreatePostDTO createPostDTO)
         {
