@@ -15,25 +15,34 @@ namespace HealthCareBlog_Backend.Services
 
         public async Task SendEmailAsync(string toEmail, string subject, string htmlContent)
         {
-            var smtpClient = new SmtpClient(_configuration["EmailSettings:SmtpHost"])
+            try
             {
-                Port = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587"),
-                Credentials = new NetworkCredential(
-                    _configuration["EmailSettings:SmtpUsername"],
-                    _configuration["EmailSettings:SmtpPassword"]),
-                EnableSsl = true,
-            };
+                var smtpClient = new SmtpClient(_configuration["EmailSettings:SmtpHost"])
+                {
+                    Port = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587"),
+                    Credentials = new NetworkCredential(
+                        _configuration["EmailSettings:SmtpUsername"],
+                        _configuration["EmailSettings:SmtpPassword"]),
+                    EnableSsl = true,
+                };
 
-            var mailMessage = new MailMessage
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(_configuration["EmailSettings:FromEmail"]!),
+                    Subject = subject,
+                    Body = htmlContent,
+                    IsBodyHtml = true,
+                };
+                mailMessage.To.Add(toEmail);
+
+                await smtpClient.SendMailAsync(mailMessage);
+                Console.WriteLine($"✅ Email sent successfully to: {toEmail}");
+            }
+            catch (Exception ex)
             {
-                From = new MailAddress(_configuration["EmailSettings:FromEmail"]!),
-                Subject = subject,
-                Body = htmlContent,
-                IsBodyHtml = true,
-            };
-            mailMessage.To.Add(toEmail);
-
-            await smtpClient.SendMailAsync(mailMessage);
+                Console.WriteLine($"❌ Failed to send email to {toEmail}. Error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task SendVerificationEmailAsync(string email, string userId, string token)

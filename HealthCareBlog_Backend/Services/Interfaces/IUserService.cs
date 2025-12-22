@@ -10,6 +10,7 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<bool> ResendVerificationEmailAsync(string email);
         Task<bool> ForgotPasswordAsync(ForgotPasswordDTO forgotPasswordDTO);
         Task<bool> ResetPasswordAsync(ResetPasswordDTO resetPasswordDTO);
+        Task<bool> ChangePasswordAsync(string userId, ChangePasswordDTO changePasswordDTO);
         Task<bool> DeleteUserAsync(string userId);
         Task<UserProfileDTO> GetUserProfileAsync(string? currentUserId, string userId, int page = 1, int pageSize = 10);
         Task<ViewAccountDTO> GetAccountInfoAsync(string userId);

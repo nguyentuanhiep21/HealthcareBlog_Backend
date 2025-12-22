@@ -21,10 +21,11 @@ builder.Services.AddDataProtection();
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedEmail = true;
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = true;
+    // Password requirements - chỉ cần 8 ký tự trở lên
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 8;
     options.User.RequireUniqueEmail = true;
 
@@ -134,7 +135,8 @@ builder.Services.AddCors(options =>
             "http://localhost:5173",
             "http://localhost:5174",
             "http://localhost:5175",
-            "http://localhost:3000"
+            "http://localhost:3000",
+            "https://localhost:3000"
             )
               .AllowAnyHeader()
               .AllowAnyMethod()

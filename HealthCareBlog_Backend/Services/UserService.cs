@@ -34,16 +34,16 @@ namespace HealthCareBlog_Backend.Services
         public async Task<bool> SignupAsync(SignupDTO signupDTO)
         {
             if (signupDTO == null || string.IsNullOrEmpty(signupDTO.FullName) || string.IsNullOrWhiteSpace(signupDTO.Email)
-                || string.IsNullOrWhiteSpace(signupDTO.Password) || string.IsNullOrWhiteSpace(signupDTO.Phone))
+                || string.IsNullOrWhiteSpace(signupDTO.Password) || string.IsNullOrWhiteSpace(signupDTO.PhoneNumber))
             {
-                throw new BadRequestException("Invalid data.");
+                throw new BadRequestException("Dữ liệu không hợp lệ.");
             }
             
             var existingUser = await _userManager.FindByEmailAsync(signupDTO.Email);
 
             if (existingUser != null)
             {
-                throw new BadRequestException("Email is already in use.");
+                throw new BadRequestException("Email đã tồn tại.");
             }
 
             var newUser = new Models.Entities.User
@@ -51,7 +51,7 @@ namespace HealthCareBlog_Backend.Services
                 FullName = signupDTO.FullName,
                 UserName = signupDTO.Email,
                 Email = signupDTO.Email,
-                PhoneNumber = signupDTO.Phone,
+                PhoneNumber = signupDTO.PhoneNumber,
                 EmailConfirmed = false,
             };
             
@@ -72,26 +72,26 @@ namespace HealthCareBlog_Backend.Services
         {
             if (loginDTO == null || string.IsNullOrWhiteSpace(loginDTO.Email) || string.IsNullOrWhiteSpace(loginDTO.Password))
             {
-                throw new BadRequestException("Invalid data.");
+                throw new BadRequestException("Dữ liệu không hợp lệ.");
             }
 
             var user = await _userManager.FindByEmailAsync(loginDTO.Email);
 
             if (user == null)
             {
-                throw new UnauthorizedException("Invalid email or password.");
+                throw new UnauthorizedException("Email hoặc mật khẩu không chính xác.");
             }
 
             if (!user.EmailConfirmed)
             {
-                throw new UnauthorizedException("Email not verified. Please verify your email first.");
+                throw new UnauthorizedException("Email chưa được xác thực. Vui lòng xác thực email trước.");
             }
 
             var result = await _userManager.CheckPasswordAsync(user, loginDTO.Password);
 
             if (!result)
             {
-                throw new UnauthorizedException("Invalid email or password.");
+                throw new UnauthorizedException("Email hoặc mật khẩu không chính xác.");
             }
 
             var token = await GenerateJwtTokenAsync(user);
@@ -104,19 +104,19 @@ namespace HealthCareBlog_Backend.Services
 
             if (user == null)
             {
-                throw new NotFoundException("User not found.");
+                throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
             if (user.EmailConfirmed)
             {
-                throw new BadRequestException("Email already verified.");
+                throw new BadRequestException("Email đã được xác thực.");
             }
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
 
             if (!result.Succeeded)
             {
-                throw new BadRequestException("Invalid or expired token.");
+                throw new BadRequestException("Mã xác thực không hợp lệ hoặc đã hết hạn.");
             }
 
             return true;
@@ -128,12 +128,12 @@ namespace HealthCareBlog_Backend.Services
 
             if (user == null)
             {
-                throw new NotFoundException("User not found.");
+                throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
             if (user.EmailConfirmed)
             {
-                throw new BadRequestException("Email already verified.");
+                throw new BadRequestException("Email đã được xác thực.");
             }
 
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -153,7 +153,7 @@ namespace HealthCareBlog_Backend.Services
 
             if (!user.EmailConfirmed)
             {
-                throw new BadRequestException("Email not verified. Please verify your email first.");
+                throw new BadRequestException("Email chưa được xác thực. Vui lòng xác thực email trước.");
             }
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -164,18 +164,52 @@ namespace HealthCareBlog_Backend.Services
 
         public async Task<bool> ResetPasswordAsync(ResetPasswordDTO resetPasswordDTO)
         {
-            var user = await _userManager.FindByEmailAsync(resetPasswordDTO.Email);
+            var user = await _userManager.FindByIdAsync(resetPasswordDTO.UserId);
 
             if (user == null)
             {
-                throw new NotFoundException("User not found.");
+                throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
             var result = await _userManager.ResetPasswordAsync(user, resetPasswordDTO.Token, resetPasswordDTO.NewPassword);
 
             if (!result.Succeeded)
             {
-                throw new BadRequestException("Invalid or expired token.");
+                throw new BadRequestException("Mã xác thực không hợp lệ hoặc đã hết hạn.");
+            }
+
+            return true;
+        }
+
+        public async Task<bool> ChangePasswordAsync(string userId, ChangePasswordDTO changePasswordDTO)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                throw new NotFoundException("Không tìm thấy người dùng.");
+            }
+
+            // Verify current password
+            var isCurrentPasswordValid = await _userManager.CheckPasswordAsync(user, changePasswordDTO.CurrentPassword);
+            if (!isCurrentPasswordValid)
+            {
+                throw new BadRequestException("Mật khẩu hiện tại không chính xác.");
+            }
+
+            // Check if new password is same as current
+            if (changePasswordDTO.CurrentPassword == changePasswordDTO.NewPassword)
+            {
+                throw new BadRequestException("Mật khẩu mới phải khác mật khẩu hiện tại.");
+            }
+
+            // Change password
+            var result = await _userManager.ChangePasswordAsync(user, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new BadRequestException($"Không thể đổi mật khẩu: {errors}");
             }
 
             return true;
@@ -193,7 +227,7 @@ namespace HealthCareBlog_Backend.Services
 
             if (user == null)
             {
-                throw new NotFoundException("User not found.");
+                throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
             var userProfile = user.ToUserProfileDTO(currentUserId);
@@ -218,7 +252,7 @@ namespace HealthCareBlog_Backend.Services
 
             if (user == null)
             {
-                throw new NotFoundException("User not found.");
+                throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
             return user.ToViewAccountDTO();
@@ -230,7 +264,7 @@ namespace HealthCareBlog_Backend.Services
 
             if (user == null)
             {
-                throw new NotFoundException("User not found.");
+                throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
             user.FirstName = updateAccountDTO.FirstName;
@@ -269,7 +303,7 @@ namespace HealthCareBlog_Backend.Services
             
             if (user == null)
             {
-                throw new NotFoundException("User not found.");
+                throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
             var userPosts = await _context.Posts

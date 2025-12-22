@@ -2,13 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HealthCareBlog_Backend.Models.DTOs.Users
 {
-    public class ResetPasswordDTO
+    public class ChangePasswordDTO
     {
-        [Required(ErrorMessage = "UserId is required")]
-        public string UserId { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Token is required")]
-        public string Token { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Current password is required")]
+        public string CurrentPassword { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "New password is required")]
         [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters")]

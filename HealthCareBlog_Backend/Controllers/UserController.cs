@@ -2,6 +2,7 @@ using HealthCareBlog_Backend.Extensions;
 using HealthCareBlog_Backend.Models.DTOs.Users;
 using HealthCareBlog_Backend.Models.DTOs.Reports;
 using HealthCareBlog_Backend.Services.Interfaces;
+using HealthCareBlog_Backend.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,22 +24,68 @@ namespace HealthCareBlog_Backend.Controllers
         [HttpPost("signup")]
         public async Task<ActionResult> Signup([FromBody] SignupDTO signupDTO)
         {
-            var result = await _userService.SignupAsync(signupDTO);
-            return Ok(new { message = "User registered successfully. Please check your email to verify your account.", success = result });
+            try
+            {
+                var result = await _userService.SignupAsync(signupDTO);
+                return Ok(new { message = "User registered successfully. Please check your email to verify your account.", success = result });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] LoginDTO loginDTO)
         {
-            var token = await _userService.LoginAsync(loginDTO);
-            return Ok(new { message = "Login successful.", token });
+            try
+            {
+                var token = await _userService.LoginAsync(loginDTO);
+                return Ok(new { message = "Login successful.", token });
+            }
+            catch (UnauthorizedException ex)
+            {
+                return Unauthorized(new { message = ex.Message, success = false });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpGet("verify-email")]
         public async Task<ActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string token)
         {
-            var result = await _userService.VerifyEmailAsync(userId, token);
-            return Ok(new { message = "Email verified successfully. You can now login.", success = result });
+            try
+            {
+                var result = await _userService.VerifyEmailAsync(userId, token);
+                return Ok(new { message = "Email verified successfully. You can now login.", success = result });
+            }
+            catch (BadRequestException ex)
+            {
+                // Nếu email đã được xác thực, vẫn trả về success
+                if (ex.Message.Contains("already verified"))
+                {
+                    return Ok(new { message = "Email đã được xác thực trước đó. Bạn có thể đăng nhập ngay!", success = true });
+                }
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi không mong muốn.", success = false });
+            }
         }
 
         [HttpPost("resend-verification")]
@@ -51,15 +98,67 @@ namespace HealthCareBlog_Backend.Controllers
         [HttpPost("forgot-password")]
         public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDTO forgotPasswordDTO)
         {
-            var result = await _userService.ForgotPasswordAsync(forgotPasswordDTO);
-            return Ok(new { message = "If the email exists, a password reset link has been sent.", success = result });
+            try
+            {
+                var result = await _userService.ForgotPasswordAsync(forgotPasswordDTO);
+                return Ok(new { message = "If the email exists, a password reset link has been sent.", success = result });
+            }
+            catch (Exception)
+            {
+                // Vẫn trả về success để không lộ thông tin email có tồn tại hay không
+                return Ok(new { message = "If the email exists, a password reset link has been sent.", success = true });
+            }
         }
 
         [HttpPost("reset-password")]
         public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDTO resetPasswordDTO)
         {
-            var result = await _userService.ResetPasswordAsync(resetPasswordDTO);
-            return Ok(new { message = "Password reset successfully. You can now login with your new password.", success = result });
+            try
+            {
+                var result = await _userService.ResetPasswordAsync(resetPasswordDTO);
+                return Ok(new { message = "Password reset successfully. You can now login with your new password.", success = result });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDTO)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                }
+
+                var result = await _userService.ChangePasswordAsync(userId, changePasswordDTO);
+                return Ok(new { message = "Đổi mật khẩu thành công.", success = result });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpGet("profile/{userId}")]
