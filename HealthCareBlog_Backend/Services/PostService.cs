@@ -150,6 +150,29 @@ namespace HealthCareBlog_Backend.Services
 
             var user = await _context.Users.FindAsync(post.UserId);
 
+            // Delete image file if exists
+            if (!string.IsNullOrEmpty(post.ImageUrl))
+            {
+                try
+                {
+                    // Parse ImageUrl to get physical path
+                    // ImageUrl format: /images/posts/filename.jpg
+                    var imagePath = post.ImageUrl.TrimStart('/');
+                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath);
+                    
+                    if (File.Exists(fullPath))
+                    {
+                        File.Delete(fullPath);
+                        Console.WriteLine($"[PostService] Deleted image file: {fullPath}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[PostService] Error deleting image file: {ex.Message}");
+                    // Continue with post deletion even if image deletion fails
+                }
+            }
+
             var postLikes = await _context.LikePosts
                 .Where(l => l.PostId == postId)
                 .ToListAsync();

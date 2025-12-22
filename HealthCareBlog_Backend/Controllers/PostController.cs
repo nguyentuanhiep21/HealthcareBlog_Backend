@@ -130,8 +130,30 @@ namespace HealthCareBlog_Backend.Controllers
         [Authorize]
         public async Task<ActionResult> DeletePost(int postId)
         {
-            var result = await _postService.DeletePostAsync(postId);
-            return Ok(new { message = "Post deleted successfully." });
+            try
+            {
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                }
+
+                var result = await _postService.DeletePostAsync(postId);
+                return Ok(new { message = "Xóa bài viết thành công.", success = true });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (UnauthorizedException ex)
+            {
+                return StatusCode(403, new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PostController] DeletePost Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPost("{postId}/like")]
@@ -196,19 +218,45 @@ namespace HealthCareBlog_Backend.Controllers
 
         [HttpPost("{postId}/report")]
         [Authorize]
-        public async Task<ActionResult<ViewReportDTO>> ReportPost(int postId, [FromBody] CreateReportDTO createReportDTO)
+        public async Task<ActionResult<ViewReportDTO>> ReportPost(int postId, [FromBody] CreatePostReportDTO createPostReportDTO)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Bạn chưa đăng nhập.", success = false });
+                }
+
+                var createReportDTO = new CreateReportDTO
+                {
+                    ContentType = "Post",
+                    ContentId = postId.ToString(),
+                    Reason = createPostReportDTO.Reason,
+                    Description = createPostReportDTO.Description
+                };
+
+                var (report, isExisting) = await _reportService.CreateReportAsync(userId, createReportDTO);
+                
+                var message = isExisting 
+                    ? "Bạn đã báo cáo bài viết này trước đó rồi." 
+                    : "Báo cáo bài viết thành công.";
+                
+                return Ok(new { message, success = true, data = report });
             }
-
-            createReportDTO.ContentType = "Post";
-            createReportDTO.ContentId = postId.ToString();
-
-            var report = await _reportService.CreateReportAsync(userId, createReportDTO);
-            return Ok(new { message = "Post reported successfully.", data = report });
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reporting post: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
     }
 }

@@ -17,17 +17,17 @@ namespace HealthCareBlog_Backend.Services
             _context = context;
         }
 
-        public async Task<ViewReportDTO> CreateReportAsync(string reporterId, CreateReportDTO createReportDTO)
+        public async Task<(ViewReportDTO report, bool isExisting)> CreateReportAsync(string reporterId, CreateReportDTO createReportDTO)
         {
             if (createReportDTO == null)
             {
-                throw new BadRequestException("Invalid data.");
+                throw new BadRequestException("Dữ liệu không hợp lệ.");
             }
 
             var validContentTypes = new[] { "Post", "Comment", "User" };
             if (!validContentTypes.Contains(createReportDTO.ContentType))
             {
-                throw new BadRequestException("Invalid content type. Must be Post, Comment, or User.");
+                throw new BadRequestException("Loại nội dung không hợp lệ. Phải là Post, Comment hoặc User.");
             }
 
             if (createReportDTO.ContentType == "Post")
@@ -35,7 +35,7 @@ namespace HealthCareBlog_Backend.Services
                 var postExists = await _context.Posts.AnyAsync(p => p.Id.ToString() == createReportDTO.ContentId);
                 if (!postExists)
                 {
-                    throw new NotFoundException("Post not found.");
+                    throw new NotFoundException("Không tìm thấy bài viết.");
                 }
             }
             else if (createReportDTO.ContentType == "Comment")
@@ -43,7 +43,7 @@ namespace HealthCareBlog_Backend.Services
                 var commentExists = await _context.Comments.AnyAsync(c => c.Id.ToString() == createReportDTO.ContentId);
                 if (!commentExists)
                 {
-                    throw new NotFoundException("Comment not found.");
+                    throw new NotFoundException("Không tìm thấy bình luận.");
                 }
             }
             else if (createReportDTO.ContentType == "User")
@@ -51,7 +51,7 @@ namespace HealthCareBlog_Backend.Services
                 var userExists = await _context.Users.AnyAsync(u => u.Id == createReportDTO.ContentId);
                 if (!userExists)
                 {
-                    throw new NotFoundException("User not found.");
+                    throw new NotFoundException("Không tìm thấy người dùng.");
                 }
             }
 
@@ -63,7 +63,8 @@ namespace HealthCareBlog_Backend.Services
 
             if (existingReport != null)
             {
-                throw new BadRequestException("You have already reported this content.");
+                // Return existing report with flag indicating it already exists
+                return (ReportMapper.ToViewReportDTO(existingReport), true);
             }
 
             var newReport = new ReportedContent
@@ -80,7 +81,7 @@ namespace HealthCareBlog_Backend.Services
             _context.ReportedContents.Add(newReport);
             await _context.SaveChangesAsync();
 
-            return newReport.ToViewReportDTO();
+            return (newReport.ToViewReportDTO(), false);
         }
 
         public async Task<List<ViewReportDTO>> GetAllReportsAsync(int page = 1, int pageSize = 20, string? status = null, string? contentType = null)

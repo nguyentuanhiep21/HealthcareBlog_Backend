@@ -185,19 +185,45 @@ namespace HealthCareBlog_Backend.Controllers
 
         [HttpPost("{commentId}/report")]
         [Authorize]
-        public async Task<ActionResult<ViewReportDTO>> ReportComment(int commentId, [FromBody] CreateReportDTO createReportDTO)
+        public async Task<ActionResult<ViewReportDTO>> ReportComment(int commentId, [FromBody] CreateCommentReportDTO createCommentReportDTO)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Bạn chưa đăng nhập.", success = false });
+                }
+
+                var createReportDTO = new CreateReportDTO
+                {
+                    ContentType = "Comment",
+                    ContentId = commentId.ToString(),
+                    Reason = createCommentReportDTO.Reason,
+                    Description = createCommentReportDTO.Description
+                };
+
+                var (report, isExisting) = await _reportService.CreateReportAsync(userId, createReportDTO);
+                
+                var message = isExisting 
+                    ? "Bạn đã báo cáo bình luận này trước đó rồi." 
+                    : "Báo cáo bình luận thành công.";
+                
+                return Ok(new { message, success = true, data = report });
             }
-
-            createReportDTO.ContentType = "Comment";
-            createReportDTO.ContentId = commentId.ToString();
-
-            var report = await _reportService.CreateReportAsync(userId, createReportDTO);
-            return Ok(new { message = "Comment reported successfully.", data = report });
+            catch (HealthCareBlog_Backend.Exceptions.NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reporting comment: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
     }
 }
