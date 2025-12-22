@@ -17,7 +17,13 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 CommentCount = post.CommentCount,
                 AuthorId = post.UserId,
                 IsLikedByCurrentUser = userId != null && post.Likes.Any(like => like.UserId == userId),
-                IsSavedByCurrentUser = userId != null && post.SavedByUsers.Any(sp => sp.UserId == userId)
+                IsSavedByCurrentUser = userId != null && post.SavedByUsers.Any(sp => sp.UserId == userId),
+                Author = new AuthorDTO
+                {
+                    Id = post.User?.Id ?? "",
+                    FullName = post.User?.FullName ?? "Unknown",
+                    AvatarUrl = string.IsNullOrEmpty(post.User?.AvatarUrl) ? "/images/logo.png" : post.User.AvatarUrl,
+                }
             };
         }
 
@@ -25,14 +31,24 @@ namespace HealthCareBlog_Backend.Models.Mapper
         {
             return new ViewPostDTO
             {
+                Id = post.Id,
                 AuthorId = post.UserId,
                 Content = post.Content,
                 ImageUrl = post.ImageUrl,
                 UploadTime = post.CreatedAt,
+                CreatedAt = post.CreatedAt,
                 LikeCount = post.LikeCount,
                 CommentCount = post.CommentCount,
                 IsLikedByCurrentUser = userId != null && post.Likes.Any(like => like.UserId == userId),
-                IsSavedByCurrentUser = userId != null && post.SavedByUsers.Any(sp => sp.UserId == userId)
+                IsSavedByCurrentUser = userId != null && post.SavedByUsers.Any(sp => sp.UserId == userId),
+                Author = new AuthorDTO
+                {
+                    Id = post.User?.Id ?? "",
+                    FullName = post.User?.FullName ?? "Unknown",
+                    AvatarUrl = string.IsNullOrEmpty(post.User?.AvatarUrl) ? "/images/logo.png" : post.User.AvatarUrl,
+                    Bio = post.User?.Bio,
+                    IsFollowing = userId != null && post.User != null && post.User.Followers.Any(f => f.FollowerId == userId)
+                }
             };
         }
     }

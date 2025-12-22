@@ -53,6 +53,7 @@ namespace HealthCareBlog_Backend.Services
                 Email = signupDTO.Email,
                 PhoneNumber = signupDTO.PhoneNumber,
                 EmailConfirmed = false,
+                AvatarUrl = "/images/logo.png", // Set default avatar
             };
             
             var result = await _userManager.CreateAsync(newUser, signupDTO.Password);

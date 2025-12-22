@@ -6,6 +6,7 @@ namespace HealthCareBlog_Backend.Models.DTOs.Posts
     {
         public int Id { get; set; }
         public string AuthorId { get; set; } = string.Empty;
+        public AuthorDTO Author { get; set; } = null!;
         public string Content { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public string? ImageUrl { get; set; }

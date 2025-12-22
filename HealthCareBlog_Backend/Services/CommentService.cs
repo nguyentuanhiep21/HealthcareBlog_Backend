@@ -4,6 +4,7 @@ using HealthCareBlog_Backend.Exceptions;
 using HealthCareBlog_Backend.Models.DTOs.Comments;
 using HealthCareBlog_Backend.Models.Mapper;
 using HealthCareBlog_Backend.Models.Entities;
+using HealthCareBlog_Backend.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthCareBlog_Backend.Services
@@ -39,17 +40,34 @@ namespace HealthCareBlog_Backend.Services
                 throw new BadRequestException("Invalid data.");
             }
 
+            // Kiểm tra post tồn tại
+            var post = await _context.Posts.FindAsync(createCommentDTO.PostId);
+            if (post == null)
+            {
+                throw new NotFoundException("Không tìm thấy bài viết.");
+            }
+
             var newComment = new Comment
             {
                 UserId = AuthorId,
                 PostId = createCommentDTO.PostId,
                 Content = createCommentDTO.Content,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTimeHelper.GetVietnamTime()
             };
 
             _context.Comments.Add(newComment);
+            
+            // Tăng comment count của post
+            post.CommentCount++;
+            
             await _context.SaveChangesAsync();
-            return newComment.ToCommentDetailDTO();
+            
+            // Reload comment with User data
+            var commentWithUser = await _context.Comments
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c => c.Id == newComment.Id);
+            
+            return commentWithUser!.ToCommentDetailDTO();
         }
 
         public async Task<CommentDetailDTO> UpdateCommentAsync(string AuthorId, int commentId, UpdateCommentDTO updateCommentDTO)
@@ -122,7 +140,14 @@ namespace HealthCareBlog_Backend.Services
 
             if (existingLike != null)
             {
-                throw new BadRequestException("You have already liked this comment.");
+                // Đã like rồi, unlike luôn
+                _context.LikeComments.Remove(existingLike);
+                if (comment.LikeCount > 0)
+                {
+                    comment.LikeCount--;
+                }
+                await _context.SaveChangesAsync();
+                return false; // Return false để biết là đã unlike
             }
 
             var newLike = new LikeComment
@@ -135,7 +160,7 @@ namespace HealthCareBlog_Backend.Services
             _context.LikeComments.Add(newLike);
             comment.LikeCount++;
             await _context.SaveChangesAsync();
-            return true;
+            return true; // Return true để biết là đã like
         }
 
         public async Task<bool> UnlikeLikeCommentAsync(string UserId, int commentId)
@@ -152,7 +177,17 @@ namespace HealthCareBlog_Backend.Services
 
             if (existingLike == null)
             {
-                throw new BadRequestException("You have not liked this comment yet.");
+                // Chưa like, like luôn
+                var newLike = new LikeComment
+                {
+                    UserId = UserId,
+                    CommentId = commentId,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.LikeComments.Add(newLike);
+                comment.LikeCount++;
+                await _context.SaveChangesAsync();
+                return false; // Return false để biết là đã like
             }
 
             _context.LikeComments.Remove(existingLike);
@@ -163,7 +198,7 @@ namespace HealthCareBlog_Backend.Services
             }
 
             await _context.SaveChangesAsync();
-            return true;
+            return true; // Return true để biết là đã unlike
         }
     }
 }

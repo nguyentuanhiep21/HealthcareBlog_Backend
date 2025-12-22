@@ -6,6 +6,7 @@ using HealthCareBlog_Backend.Models.Mapper;
 using HealthCareBlog_Backend.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using HealthCareBlog_Backend.Models.DTOs.Comments;
+using HealthCareBlog_Backend.Helpers;
 
 namespace HealthCareBlog_Backend.Services
 {
@@ -21,9 +22,13 @@ namespace HealthCareBlog_Backend.Services
         public async Task<PostDetailDTO> GetPostByIdAsync(string? UserId, int postId)
         {
             var post = await _context.Posts
+                .Include(p => p.User)
                 .Include(p => p.Likes)
                 .Include(p => p.SavedByUsers)
                 .Include(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.Likes)
                 .FirstOrDefaultAsync(p => p.Id == postId);
 
             if (post == null)
@@ -33,15 +38,7 @@ namespace HealthCareBlog_Backend.Services
 
             var comments = post.Comments
                 .OrderByDescending(c => c.CreatedAt)
-                .Select(c => new ViewCommentDTO
-                {
-                    AuthorId = c.UserId!,
-                    PostId = c.PostId,
-                    UploadTime = c.CreatedAt,
-                    Content = c.Content,
-                    LikeCount = _context.LikeComments.Count(lc => lc.CommentId == c.Id),
-                    IsLikedByCurrentUser = UserId != null && _context.LikeComments.Any(lc => lc.CommentId == c.Id && lc.UserId == UserId)
-                })
+                .Select(c => c.ToViewCommentDTO(UserId))
                 .ToList();
 
             var postDTO = post.ToPostDetailDTO(UserId);
@@ -62,6 +59,8 @@ namespace HealthCareBlog_Backend.Services
             }
             
             var posts = await _context.Posts
+                .Include(p => p.User)
+                    .ThenInclude(u => u.Followers)
                 .Include(p => p.Likes)
                 .Include(p => p.SavedByUsers)
                 .OrderByDescending(p => p.CreatedAt)
@@ -100,7 +99,7 @@ namespace HealthCareBlog_Backend.Services
                 UserId = AuthorId,
                 Content = createPostDTO.Content,
                 ImageUrl = createPostDTO.ImageUrl,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTimeHelper.GetVietnamTime(),
                 LikeCount = 0,
                 CommentCount = 0
             };
@@ -232,7 +231,14 @@ namespace HealthCareBlog_Backend.Services
 
             if (existingLike != null)
             {
-                throw new BadRequestException("You have already liked this post.");
+                // Đã like rồi, unlike luôn
+                _context.LikePosts.Remove(existingLike);
+                if (post.LikeCount > 0)
+                {
+                    post.LikeCount--;
+                }
+                await _context.SaveChangesAsync();
+                return false; // Return false để biết là đã unlike
             }
 
             var newLike = new LikePost
@@ -246,7 +252,7 @@ namespace HealthCareBlog_Backend.Services
             post.LikeCount++;
             await _context.SaveChangesAsync();
 
-            return true;
+            return true; // Return true để biết là đã like
         }
 
         public async Task<bool> UnlikePostAsync(string UserId, int postId)
@@ -263,7 +269,17 @@ namespace HealthCareBlog_Backend.Services
 
             if (existingLike == null)
             {
-                throw new BadRequestException("You have not liked this post yet.");
+                // Chưa like, like luôn
+                var newLike = new LikePost
+                {
+                    UserId = UserId,
+                    PostId = postId,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.LikePosts.Add(newLike);
+                post.LikeCount++;
+                await _context.SaveChangesAsync();
+                return false; // Return false để biết là đã like
             }
 
             _context.LikePosts.Remove(existingLike);
@@ -274,7 +290,7 @@ namespace HealthCareBlog_Backend.Services
             }
 
             await _context.SaveChangesAsync();
-            return true;
+            return true; // Return true để biết là đã unlike
         }
     }
 }

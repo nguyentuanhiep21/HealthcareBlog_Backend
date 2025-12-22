@@ -29,7 +29,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 Id = user.Id!,
                 FullName = user.FullName ?? "Unknown",
                 Email = user.Email,
-                AvatarUrl = user.AvatarUrl,
+                AvatarUrl = string.IsNullOrEmpty(user.AvatarUrl) ? "/images/logo.png" : user.AvatarUrl,
                 FollowerCount = user.FollowerCount,
                 FollowingCount = user.FollowingCount,
                 IsFollowedByCurrentUser = currentUserId != null && user.Followers.Any(f => f.FollowerId == currentUserId)

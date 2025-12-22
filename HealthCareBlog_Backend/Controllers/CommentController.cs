@@ -35,14 +35,30 @@ namespace HealthCareBlog_Backend.Controllers
         [Authorize]
         public async Task<ActionResult<CommentDetailDTO>> CreateComment([FromBody] CreateCommentDTO createCommentDTO)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                }
 
-            var comment = await _commentService.CreateCommentAsync(userId, createCommentDTO);
-            return CreatedAtAction(nameof(GetComments), new { postId = comment.PostId }, comment);
+                var comment = await _commentService.CreateCommentAsync(userId, createCommentDTO);
+                return Ok(new { message = "Bình luận thành công.", data = comment, success = true });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CommentController] CreateComment Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPut("{commentId}")]
@@ -51,56 +67,120 @@ namespace HealthCareBlog_Backend.Controllers
             int commentId,
             [FromBody] UpdateCommentDTO updateCommentDTO)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                }
 
-            var comment = await _commentService.UpdateCommentAsync(userId, commentId, updateCommentDTO);
-            return Ok(comment);
+                var comment = await _commentService.UpdateCommentAsync(userId, commentId, updateCommentDTO);
+                return Ok(new { message = "Cập nhật bình luận thành công.", data = comment, success = true });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.UnauthorizedException ex)
+            {
+                return StatusCode(403, new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CommentController] UpdateComment Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpDelete("{commentId}")]
         [Authorize]
         public async Task<ActionResult> DeleteComment(int commentId)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                }
 
-            var result = await _commentService.DeleteCommentAsync(userId, commentId);
-            return Ok(new { message = "Comment deleted successfully." });
+                var result = await _commentService.DeleteCommentAsync(userId, commentId);
+                return Ok(new { message = "Xóa bình luận thành công.", success = true });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.UnauthorizedException ex)
+            {
+                return StatusCode(403, new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CommentController] DeleteComment Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPost("{commentId}/like")]
         [Authorize]
         public async Task<ActionResult> LikeComment(int commentId)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                }
 
-            var result = await _commentService.LikeCommentAsync(userId, commentId);
-            return Ok(new { message = "Comment liked successfully." });
+                var result = await _commentService.LikeCommentAsync(userId, commentId);
+                return Ok(new { message = "Thích bình luận thành công.", success = true });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CommentController] LikeComment Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpDelete("{commentId}/like")]
         [Authorize]
         public async Task<ActionResult> UnlikeComment(int commentId)
         {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return Unauthorized("User not authenticated.");
-            }
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "Người dùng chưa đăng nhập.", success = false });
+                }
 
-            var result = await _commentService.UnlikeLikeCommentAsync(userId, commentId);
-            return Ok(new { message = "Comment unliked successfully." });
+                var result = await _commentService.UnlikeLikeCommentAsync(userId, commentId);
+                return Ok(new { message = "Bỏ thích bình luận thành công.", success = true });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CommentController] UnlikeComment Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
         }
 
         [HttpPost("{commentId}/report")]
