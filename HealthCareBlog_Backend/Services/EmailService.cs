@@ -41,27 +41,27 @@ namespace HealthCareBlog_Backend.Services
             var frontendUrl = _configuration["AppSettings:FrontendUrl"];
             var verificationUrl = $"{frontendUrl}/auth/verify-email?userId={System.Uri.EscapeDataString(userId)}&token={System.Uri.EscapeDataString(token)}";
 
-            var emailSubject = "Xac nhan tai khoan HealthCareBlog";
+            var emailSubject = "Xác nhận tài khoản HealthCareBlog";
             var emailBody = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                    <h2 style='color: #2c3e50;'>Chao mung den voi HealthCareBlog!</h2>
-                    <p>Xin chao,</p>
-                    <p>Cam on ban da dang ky tai khoan tai HealthCareBlog. De hoan tat qua trinh dang ky, vui long xac nhan email cua ban bang cach nhap vao nut ben duoi:</p>
+                    <h2 style='color: #2c3e50;'>Chào mừng đến với HealthCareBlog!</h2>
+                    <p>Xin chào,</p>
+                    <p>Cảm ơn bạn đã đăng ký tài khoản tại HealthCareBlog. Để hoàn tất quá trình đăng ký, vui lòng xác nhận email của bạn bằng cách nhấp vào nút bên dưới:</p>
                     
                     <div style='text-align: center; margin: 30px 0;'>
                         <a href='{verificationUrl}' 
-                           style='background-color: oklch(0.72 0.08 155); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
-                            Xac nhan Email
+                           style='background-color: #3498db; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
+                            Xác nhận Email
                         </a>
                     </div>
                     
                     <p style='color: #e74c3c; font-size: 14px;'>
-                        <strong>Luu y:</strong> Lien ket nay se het han sau 24 gio. Neu ban khong thuc hien viec dang ky nay, vui long bo qua email nay.
+                        <strong>Lưu ý:</strong> Liên kết này sẽ hết hạn sau 24 giờ. Nếu bạn không thực hiện việc đăng ký này, vui lòng bỏ qua email này.
                     </p>
                     
                     <hr style='margin: 30px 0; border: none; border-top: 1px solid #ecf0f1;'>
                     <p style='font-size: 12px; color: #7f8c8d;'>
-                        Email nay duoc gui tu dong tu he thong HealthCareBlog. Vui long khong tra loi email nay.
+                        Email này được gửi tự động từ hệ thống HealthCareBlog. Vui lòng không trả lời email này.
                     </p>
                 </div>";
 
@@ -73,27 +73,27 @@ namespace HealthCareBlog_Backend.Services
             var frontendUrl = _configuration["AppSettings:FrontendUrl"];
             var resetUrl = $"{frontendUrl}/auth/reset-password?userId={System.Uri.EscapeDataString(userId)}&token={System.Uri.EscapeDataString(token)}";
 
-            var emailSubject = "Dat lai mat khau HealthCareBlog";
+            var emailSubject = "Đặt lại mật khẩu HealthCareBlog";
             var emailBody = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                    <h2 style='color: #2c3e50;'>Yeu cau dat lai mat khau</h2>
-                    <p>Xin chao,</p>
-                    <p>Chung toi nhan duoc yeu cau dat lai mat khau cho tai khoan cua ban. De tiep tuc, vui long nhap vao nut ben duoi:</p>
+                    <h2 style='color: #e74c3c;'>Đặt lại mật khẩu HealthCareBlog</h2>
+                    <p>Xin chào,</p>
+                    <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Để tiếp tục, vui lòng nhấp vào nút bên dưới:</p>
                     
                     <div style='text-align: center; margin: 30px 0;'>
                         <a href='{resetUrl}' 
-                           style='background-color: oklch(0.72 0.08 155); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
-                            Dat lai mat khau
+                           style='background-color: #e74c3c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
+                            Đặt lại mật khẩu
                         </a>
                     </div>
                     
                     <p style='color: #e74c3c; font-size: 14px;'>
-                        <strong>Luu y:</strong> Lien ket nay chi co hieu luc trong 1 gio. Neu ban khong yeu cau dat lai mat khau, vui long bo qua email nay va tai khoan cua ban van an toan.
+                        <strong>Lưu ý:</strong> Liên kết này sẽ hết hạn sau 1 giờ vì lý do bảo mật. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này và tài khoản của bạn sẽ vẫn an toàn.
                     </p>
                     
                     <hr style='margin: 30px 0; border: none; border-top: 1px solid #ecf0f1;'>
                     <p style='font-size: 12px; color: #7f8c8d;'>
-                        Email nay duoc gui tu dong tu he thong HealthCareBlog. Vui long khong tra loi email nay.
+                        Email này được gửi tự động từ hệ thống HealthCareBlog. Vui lòng không trả lời email này.
                     </p>
                 </div>";
 
