@@ -30,10 +30,7 @@ namespace HealthCareBlog_Backend.Services
                 Subject = subject,
                 Body = htmlContent,
                 IsBodyHtml = true,
-                BodyEncoding = System.Text.Encoding.UTF8,
-                SubjectEncoding = System.Text.Encoding.UTF8,
             };
-
             mailMessage.To.Add(toEmail);
 
             await smtpClient.SendMailAsync(mailMessage);
