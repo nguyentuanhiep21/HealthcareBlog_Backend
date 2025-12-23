@@ -12,9 +12,12 @@ namespace HealthCareBlog_Backend.Services
     public class CommentService : ICommentService
     {
         public readonly ApplicationDbContext _context;
-        public CommentService(ApplicationDbContext context)
+        private readonly INotificationService _notificationService;
+
+        public CommentService(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<List<ViewCommentDTO>> ViewCommentsAsync(string? UserId, int postId, int page = 1, int pageSize = 10)
@@ -61,6 +64,16 @@ namespace HealthCareBlog_Backend.Services
             post.CommentCount++;
             
             await _context.SaveChangesAsync();
+            
+            // Create notification for post owner
+            await _notificationService.CreateNotificationAsync(
+                post.UserId, 
+                AuthorId, 
+                NotificationType.Comment, 
+                "đã bình luận về bài viết của bạn",
+                createCommentDTO.PostId,
+                newComment.Id
+            );
             
             // Reload comment with User data
             var commentWithUser = await _context.Comments

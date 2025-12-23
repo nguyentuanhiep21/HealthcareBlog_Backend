@@ -30,6 +30,22 @@ namespace HealthCareBlog_Backend.Controllers
             return Ok(posts);
         }
 
+        [HttpGet("trending")]
+        public async Task<ActionResult<List<ViewPostDTO>>> GetTrendingPosts()
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                var trendingPosts = await _postService.GetTrendingPostsAsync(userId);
+                return Ok(trendingPosts);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PostController] GetTrendingPosts Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
         [HttpGet("{postId}")]
         public async Task<ActionResult<PostDetailDTO>> GetPostById(int postId)
         {

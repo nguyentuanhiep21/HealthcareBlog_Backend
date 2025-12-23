@@ -13,10 +13,12 @@ namespace HealthCareBlog_Backend.Services
     public class PostService : IPostService
     {
         public readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public PostService(ApplicationDbContext context)
+        public PostService(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<PostDetailDTO> GetPostByIdAsync(string? UserId, int postId)
@@ -72,6 +74,25 @@ namespace HealthCareBlog_Backend.Services
             return postDTOs;
         }
 
+        public async Task<List<ViewPostDTO>> GetTrendingPostsAsync(string? UserId)
+        {
+            var today = DateTime.UtcNow.Date;
+            var tomorrow = today.AddDays(1);
+
+            var trendingPosts = await _context.Posts
+                .Include(p => p.User)
+                    .ThenInclude(u => u.Followers)
+                .Include(p => p.Likes)
+                .Include(p => p.SavedByUsers)
+                .Where(p => p.CreatedAt >= today && p.CreatedAt < tomorrow)
+                .OrderByDescending(p => p.LikeCount + p.CommentCount)
+                .Take(3)
+                .ToListAsync();
+
+            var postDTOs = trendingPosts.Select(p => p.ToViewPostDTO(UserId)).ToList();
+            return postDTOs;
+        }
+
         public async Task<PostDetailDTO> CreatePostAsync(string AuthorId, CreatePostDTO createPostDTO)
         {
             Console.WriteLine($"[CreatePostAsync] Starting - AuthorId: {AuthorId}");
@@ -98,7 +119,7 @@ namespace HealthCareBlog_Backend.Services
             {
                 UserId = AuthorId,
                 Content = createPostDTO.Content,
-                ImageUrl = createPostDTO.ImageUrl,
+                ImageUrl = createPostDTO.ImageUrl ?? string.Empty,
                 CreatedAt = DateTimeHelper.GetVietnamTime(),
                 LikeCount = 0,
                 CommentCount = 0
@@ -130,6 +151,26 @@ namespace HealthCareBlog_Backend.Services
             if (post.UserId != AuthorId)
             {
                 throw new UnauthorizedException("You are not authorized to update this post.");
+            }
+
+            // Delete old image if changing to new image or removing image
+            if (!string.IsNullOrEmpty(post.ImageUrl) && post.ImageUrl != updatePostDTO.ImageUrl)
+            {
+                try
+                {
+                    var imagePath = post.ImageUrl.TrimStart('/');
+                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath);
+                    
+                    if (File.Exists(fullPath))
+                    {
+                        File.Delete(fullPath);
+                        Console.WriteLine($"[PostService] Deleted old image: {fullPath}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[PostService] Error deleting old image: {ex.Message}");
+                }
             }
 
             post.Content = updatePostDTO.Content;
@@ -274,6 +315,15 @@ namespace HealthCareBlog_Backend.Services
             _context.LikePosts.Add(newLike);
             post.LikeCount++;
             await _context.SaveChangesAsync();
+
+            // Create notification for post owner
+            await _notificationService.CreateNotificationAsync(
+                post.UserId, 
+                UserId, 
+                NotificationType.Like, 
+                "đã thích bài viết của bạn",
+                postId
+            );
 
             return true; // Return true để biết là đã like
         }

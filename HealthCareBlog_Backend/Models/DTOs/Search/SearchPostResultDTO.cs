@@ -5,6 +5,10 @@ namespace HealthCareBlog_Backend.Models.DTOs.Search
         public int Id { get; set; }
         public string AuthorId { get; set; } = string.Empty;
         public string AuthorName { get; set; } = string.Empty;
+        public string? AuthorAvatarUrl { get; set; }
+        public string? AuthorBio { get; set; }
+        public int AuthorFollowerCount { get; set; }
+        public int AuthorFollowingCount { get; set; }
         public DateTime UploadTime { get; set; }
         public string Content { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }

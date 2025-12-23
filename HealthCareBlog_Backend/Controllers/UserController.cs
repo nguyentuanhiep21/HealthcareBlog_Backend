@@ -188,6 +188,21 @@ namespace HealthCareBlog_Backend.Controllers
             }
         }
 
+        [HttpGet("suggested")]
+        public async Task<ActionResult<List<SuggestedUserDTO>>> GetSuggestedUsers()
+        {
+            try
+            {
+                var currentUserId = User.GetUserId();
+                var suggestedUsers = await _userService.GetSuggestedUsersAsync(currentUserId);
+                return Ok(suggestedUsers);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
         [HttpGet("account")]
         [Authorize]
         public async Task<ActionResult<ViewAccountDTO>> GetAccountInfo()
@@ -285,24 +300,57 @@ namespace HealthCareBlog_Backend.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
             }
         }
+        [HttpPut("avatar")]
+        [Authorize]
+        public async Task<ActionResult<ViewAccountDTO>> UpdateAvatar([FromBody] UpdateAvatarDTO updateAvatarDTO)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { message = "User not authenticated.", success = false });
+                }
 
+                var updatedAccount = await _userService.UpdateAvatarAsync(userId, updateAvatarDTO.AvatarUrl);
+                return Ok(updatedAccount);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
         [HttpPost("{userId}/report")]
         [Authorize]
-        public async Task<ActionResult<ViewReportDTO>> ReportUser(string userId, [FromBody] CreateReportDTO createReportDTO)
+        public async Task<ActionResult<ViewReportDTO>> ReportUser(string userId, [FromBody] CreateUserReportDTO createUserReportDTO)
         {
             try
             {
                 var reporterId = User.GetUserId();
                 if (string.IsNullOrEmpty(reporterId))
                 {
-                    return Unauthorized(new { message = "User not authenticated.", success = false });
+                    return Unauthorized(new { message = "Bạn chưa đăng nhập.", success = false });
                 }
 
-                createReportDTO.ContentType = "User";
-                createReportDTO.ContentId = userId;
+                var createReportDTO = new CreateReportDTO
+                {
+                    ContentType = "User",
+                    ContentId = userId,
+                    Reason = createUserReportDTO.Reason,
+                    Description = createUserReportDTO.Description
+                };
 
-                var report = await _reportService.CreateReportAsync(reporterId, createReportDTO);
-                return Ok(new { message = "User reported successfully.", data = report });
+                var (report, isExisting) = await _reportService.CreateReportAsync(reporterId, createReportDTO);
+                
+                var message = isExisting 
+                    ? "Bạn đã báo cáo người dùng này trước đó rồi." 
+                    : "Báo cáo người dùng thành công.";
+                
+                return Ok(new { message, success = true, data = report });
             }
             catch (BadRequestException ex)
             {

@@ -66,19 +66,23 @@ namespace HealthCareBlog_Backend.Services
             if (pageSize < 1) pageSize = 20;
             if (pageSize > 100) pageSize = 100;
 
-            var savedPosts = await _context.SavedPosts
+            var savedPostsQuery = _context.SavedPosts
                 .Where(sp => sp.UserId == userId)
+                .Include(sp => sp.Post)
+                    .ThenInclude(p => p.User)
+                        .ThenInclude(u => u.Followers)
                 .Include(sp => sp.Post)
                     .ThenInclude(p => p.Likes)
                 .Include(sp => sp.Post)
                     .ThenInclude(p => p.SavedByUsers)
                 .OrderByDescending(sp => sp.CreatedAt)
                 .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(sp => sp.Post)
-                .ToListAsync();
+                .Take(pageSize);
 
-            var postDTOs = savedPosts.Select(p => p.ToViewPostDTO(userId)).ToList();
+            var savedPosts = await savedPostsQuery.ToListAsync();
+            var posts = savedPosts.Select(sp => sp.Post).ToList();
+            var postDTOs = posts.Select(p => p.ToViewPostDTO(userId)).ToList();
+            
             return postDTOs;
         }
 

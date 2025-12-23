@@ -11,5 +11,6 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<bool> DeletePostAsync(int postId);
         Task<bool> LikePostAsync(string UserId, int postId);
         Task<bool> UnlikePostAsync(string UserId, int postId);
+        Task<List<ViewPostDTO>> GetTrendingPostsAsync(string? UserId);
     }
 }

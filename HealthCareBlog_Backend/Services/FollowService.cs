@@ -2,6 +2,7 @@
 using HealthCareBlog_Backend.Services.Interfaces;
 using HealthCareBlog_Backend.Exceptions;
 using HealthCareBlog_Backend.Models.Entities;
+using HealthCareBlog_Backend.Models.DTOs.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthCareBlog_Backend.Services
@@ -9,10 +10,12 @@ namespace HealthCareBlog_Backend.Services
     public class FollowService : IFollowService
     {
         public readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public FollowService(ApplicationDbContext context)
+        public FollowService(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<bool> FollowUserAsync(string followerId, string followingId)
@@ -51,6 +54,15 @@ namespace HealthCareBlog_Backend.Services
             following.FollowerCount++;  
 
             await _context.SaveChangesAsync();
+
+            // Create notification for followed user
+            await _notificationService.CreateNotificationAsync(
+                followingId,
+                followerId,
+                NotificationType.Follow,
+                "đã bắt đầu theo dõi bạn"
+            );
+
             return true;
         }
 
@@ -127,6 +139,62 @@ namespace HealthCareBlog_Backend.Services
         {
             return await _context.Follows
                 .AnyAsync(f => f.FollowerId == followerId && f.FollowingId == followingId);
+        }
+
+        public async Task<List<FollowUserDTO>> GetFollowingUsersAsync(string userId, string? currentUserId, int page = 1, int pageSize = 20)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+            if (pageSize > 100) pageSize = 100;
+
+            var followingUsers = await _context.Follows
+                .Where(f => f.FollowerId == userId)
+                .Include(f => f.FollowingUser)
+                .ThenInclude(u => u.Followers)
+                .OrderByDescending(f => f.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(f => new FollowUserDTO
+                {
+                    Id = f.FollowingUser.Id!,
+                    FullName = f.FollowingUser.FullName ?? "Unknown",
+                    AvatarUrl = f.FollowingUser.AvatarUrl ?? "/images/logo.png",
+                    Bio = f.FollowingUser.Bio,
+                    FollowerCount = f.FollowingUser.FollowerCount,
+                    FollowingCount = f.FollowingUser.FollowingCount,
+                    IsFollowedByCurrentUser = currentUserId != null && f.FollowingUser.Followers.Any(follower => follower.FollowerId == currentUserId)
+                })
+                .ToListAsync();
+
+            return followingUsers;
+        }
+
+        public async Task<List<FollowUserDTO>> GetFollowersUsersAsync(string userId, string? currentUserId, int page = 1, int pageSize = 20)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+            if (pageSize > 100) pageSize = 100;
+
+            var followers = await _context.Follows
+                .Where(f => f.FollowingId == userId)
+                .Include(f => f.Follower)
+                .ThenInclude(u => u.Followers)
+                .OrderByDescending(f => f.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(f => new FollowUserDTO
+                {
+                    Id = f.Follower.Id!,
+                    FullName = f.Follower.FullName ?? "Unknown",
+                    AvatarUrl = f.Follower.AvatarUrl ?? "/images/logo.png",
+                    Bio = f.Follower.Bio,
+                    FollowerCount = f.Follower.FollowerCount,
+                    FollowingCount = f.Follower.FollowingCount,
+                    IsFollowedByCurrentUser = currentUserId != null && f.Follower.Followers.Any(follower => follower.FollowerId == currentUserId)
+                })
+                .ToListAsync();
+
+            return followers;
         }
     }
 }

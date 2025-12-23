@@ -268,25 +268,39 @@ namespace HealthCareBlog_Backend.Services
                 throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
-            user.FirstName = updateAccountDTO.FirstName;
-            user.LastName = updateAccountDTO.LastName;
-            
-            if (!string.IsNullOrWhiteSpace(updateAccountDTO.FirstName) && !string.IsNullOrWhiteSpace(updateAccountDTO.LastName))
+            if (!string.IsNullOrWhiteSpace(updateAccountDTO.FullName))
             {
-                user.FullName = $"{updateAccountDTO.FirstName} {updateAccountDTO.LastName}";
-            }
-            else if (!string.IsNullOrWhiteSpace(updateAccountDTO.FirstName))
-            {
-                user.FullName = updateAccountDTO.FirstName;
-            }
-            else if (!string.IsNullOrWhiteSpace(updateAccountDTO.LastName))
-            {
-                user.FullName = updateAccountDTO.LastName;
+                user.FullName = updateAccountDTO.FullName;
+                // Split FullName into FirstName and LastName
+                var nameParts = updateAccountDTO.FullName.Trim().Split(new[] { ' ' }, 2);
+                if (nameParts.Length == 2)
+                {
+                    user.FirstName = nameParts[0];
+                    user.LastName = nameParts[1];
+                }
+                else if (nameParts.Length == 1)
+                {
+                    user.FirstName = nameParts[0];
+                    user.LastName = "";
+                }
             }
 
-            user.PhoneNumber = updateAccountDTO.PhoneNumber;
-            user.Bio = updateAccountDTO.Bio;
-            user.AvatarUrl = updateAccountDTO.AvatarUrl;
+            // Only update these fields if they are provided
+            if (updateAccountDTO.PhoneNumber != null)
+            {
+                user.PhoneNumber = updateAccountDTO.PhoneNumber;
+            }
+
+            if (updateAccountDTO.Bio != null)
+            {
+                user.Bio = updateAccountDTO.Bio;
+            }
+
+            // Do NOT update avatar here - avatar is updated separately via UpdateAvatarAsync
+            // if (!string.IsNullOrWhiteSpace(updateAccountDTO.AvatarUrl))
+            // {
+            //     user.AvatarUrl = updateAccountDTO.AvatarUrl;
+            // }
 
             var result = await _userManager.UpdateAsync(user);
 
@@ -404,6 +418,65 @@ namespace HealthCareBlog_Backend.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<List<SuggestedUserDTO>> GetSuggestedUsersAsync(string? currentUserId)
+        {
+            var users = await _context.Users
+                .Include(u => u.Followers)
+                .OrderByDescending(u => u.FollowerCount)
+                .Take(3)
+                .Select(u => new SuggestedUserDTO
+                {
+                    Id = u.Id!,
+                    FullName = u.FullName ?? "",
+                    AvatarUrl = u.AvatarUrl,
+                    FollowerCount = u.FollowerCount,
+                    IsFollowing = currentUserId != null && u.Followers.Any(f => f.FollowerId == currentUserId)
+                })
+                .ToListAsync();
+
+            return users;
+        }
+
+        public async Task<ViewAccountDTO> UpdateAvatarAsync(string userId, string avatarUrl)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            
+            if (user == null)
+            {
+                throw new NotFoundException("User not found.");
+            }
+
+            // Delete old avatar if it's not the default logo
+            if (!string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl != "/images/logo.png" && user.AvatarUrl.StartsWith("/uploads/avatars/"))
+            {
+                try
+                {
+                    var oldImagePath = user.AvatarUrl.TrimStart('/');
+                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", oldImagePath);
+                    
+                    if (File.Exists(fullPath))
+                    {
+                        File.Delete(fullPath);
+                        Console.WriteLine($"[UserService] Deleted old avatar: {fullPath}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[UserService] Error deleting old avatar: {ex.Message}");
+                }
+            }
+
+            user.AvatarUrl = avatarUrl;
+            var result = await _userManager.UpdateAsync(user);
+            
+            if (!result.Succeeded)
+            {
+                throw new BadRequestException("Failed to update avatar: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+
+            return user.ToViewAccountDTO();
         }
 
         private async Task<string> GenerateJwtTokenAsync(Models.Entities.User user)

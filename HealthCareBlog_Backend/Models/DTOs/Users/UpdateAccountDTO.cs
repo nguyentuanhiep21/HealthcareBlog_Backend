@@ -4,11 +4,8 @@ namespace HealthCareBlog_Backend.Models.DTOs.Users
 {
     public class UpdateAccountDTO
     {
-        [StringLength(50, ErrorMessage = "First name cannot exceed 50 characters")]
-        public string? FirstName { get; set; }
-
-        [StringLength(50, ErrorMessage = "Last name cannot exceed 50 characters")]
-        public string? LastName { get; set; }
+        [StringLength(100, ErrorMessage = "Full name cannot exceed 100 characters")]
+        public string? FullName { get; set; }
 
         [Phone(ErrorMessage = "Invalid phone number format")]
         [StringLength(50, ErrorMessage = "Phone number cannot exceed 50 characters")]
