@@ -13,5 +13,17 @@ namespace HealthCareBlog_Backend.Models.DTOs.Reports
         public string? AdminNote { get; set; }
         public string ReporterId { get; set; } = string.Empty;
         public string? ResolvedById { get; set; }
+
+        // Reporter Info
+        public string ReportedByName { get; set; } = string.Empty;
+        public string? ReportedByAvatar { get; set; }
+
+        // Target Info (User/Post Author/Comment Author)
+        public string? TargetUserId { get; set; }
+        public string? TargetUserName { get; set; }
+        public string? TargetUserAvatar { get; set; }
+        
+        // Content preview (Post content or Comment content)
+        public string? TargetContent { get; set; }
     }
 }

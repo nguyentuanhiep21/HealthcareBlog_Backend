@@ -79,9 +79,6 @@ public class User : IdentityUser
     [Column("post_count")]
     public int PostCount { get; set; } = 0;
 
-    [Column("is_admin")]
-    public bool IsAdmin { get; set; } = false;
-
     [Column("is_locked")]
     public bool IsLocked { get; set; } = false;
 

@@ -4,6 +4,7 @@ using HealthCareBlog_Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HealthCareBlog_Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251224071413_RemoveIsAdminUseIdentityRoles")]
+    partial class RemoveIsAdminUseIdentityRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,77 @@ namespace HealthCareBlog_Backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.AuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("action_type");
+
+                    b.Property<string>("AdminId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("admin_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("new_value");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("old_value");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("TargetUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("target_user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminId");
+
+                    b.HasIndex("TargetUserId");
+
+                    b.HasIndex("EntityType", "EntityId");
+
+                    b.ToTable("audit_logs");
+                });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Comment", b =>
                 {
@@ -329,12 +403,8 @@ namespace HealthCareBlog_Backend.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("reason");
 
-                    b.Property<string>("ReporterFullName")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("reporter_fullname");
-
                     b.Property<string>("ReporterId")
+                        .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("reporter_id");
@@ -353,21 +423,6 @@ namespace HealthCareBlog_Backend.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)")
                         .HasColumnName("status");
-
-                    b.Property<string>("TargetContentSnapshot")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
-                        .HasColumnName("target_content_snapshot");
-
-                    b.Property<string>("TargetUserFullName")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("target_user_fullname");
-
-                    b.Property<string>("TargetUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("target_user_id");
 
                     b.HasKey("Id");
 
@@ -694,6 +749,23 @@ namespace HealthCareBlog_Backend.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.AuditLog", b =>
+                {
+                    b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "Admin")
+                        .WithMany()
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "TargetUser")
+                        .WithMany()
+                        .HasForeignKey("TargetUserId");
+
+                    b.Navigation("Admin");
+
+                    b.Navigation("TargetUser");
+                });
+
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Comment", b =>
                 {
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.Post", "Post")
@@ -818,7 +890,8 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "Reporter")
                         .WithMany("Reports")
                         .HasForeignKey("ReporterId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "ResolvedBy")
                         .WithMany()

@@ -89,6 +89,12 @@ namespace HealthCareBlog_Backend.Services
                 throw new UnauthorizedException("Email chưa được xác thực. Vui lòng xác thực email trước.");
             }
 
+            if (user.IsLocked)
+            {
+                var lockReason = string.IsNullOrEmpty(user.LockReason) ? "Tài khoản đã bị khóa." : user.LockReason;
+                throw new UnauthorizedException($"Tài khoản đã bị khóa. Lý do: {lockReason}");
+            }
+
             var result = await _userManager.CheckPasswordAsync(user, loginDTO.Password);
 
             if (!result)
@@ -257,7 +263,7 @@ namespace HealthCareBlog_Backend.Services
                 throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
-            return user.ToViewAccountDTO();
+            return await user.ToViewAccountDTOAsync(_userManager);
         }
 
         public async Task<ViewAccountDTO> UpdateAccountInfoAsync(string userId, UpdateAccountDTO updateAccountDTO)
@@ -310,7 +316,7 @@ namespace HealthCareBlog_Backend.Services
                 throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
-            return user.ToViewAccountDTO();
+            return await user.ToViewAccountDTOAsync(_userManager);
         }
 
         public async Task<bool> DeleteUserAsync(string userId)
@@ -409,16 +415,34 @@ namespace HealthCareBlog_Backend.Services
                 .ToListAsync();
             _context.SavedPosts.RemoveRange(userSavedPosts);
 
-            var userNotifications = await _context.Notifications
-                .Where(n => n.UserId == userId || n.ActorId == userId)
+            // Delete notifications where user is the recipient (UserId)
+            var recipientNotifications = await _context.Notifications
+                .Where(n => n.UserId == userId)
                 .ToListAsync();
-            _context.Notifications.RemoveRange(userNotifications);
+            _context.Notifications.RemoveRange(recipientNotifications);
 
-            var userReports = await _context.ReportedContents
+            // Delete notifications where user is the actor (ActorId)
+            var actorNotifications = await _context.Notifications
+                .Where(n => n.ActorId == userId)
+                .ToListAsync();
+            _context.Notifications.RemoveRange(actorNotifications);
+
+            // Keep reports in the system for audit trail
+            // But clear the reporter reference (set ReporterId to null) if user is the reporter
+            var reportsByUser = await _context.ReportedContents
                 .Where(r => r.ReporterId == userId)
                 .ToListAsync();
-            _context.ReportedContents.RemoveRange(userReports);
+            
+            foreach (var report in reportsByUser)
+            {
+                // Keep report record but clear the reporter reference
+                report.ReporterId = null;
+            }
+            
+            // Save all pending changes BEFORE deleting the user
+            await _context.SaveChangesAsync();
 
+            // Now delete the user identity
             var result = await _userManager.DeleteAsync(user);
             
             if (!result.Succeeded)
@@ -432,8 +456,18 @@ namespace HealthCareBlog_Backend.Services
 
         public async Task<List<SuggestedUserDTO>> GetSuggestedUsersAsync(string? currentUserId)
         {
+            // Get all admin user IDs
+            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+            var adminUserIds = adminRole != null 
+                ? await _context.UserRoles
+                    .Where(ur => ur.RoleId == adminRole.Id)
+                    .Select(ur => ur.UserId)
+                    .ToListAsync()
+                : new List<string>();
+
             var users = await _context.Users
                 .Include(u => u.Followers)
+                .Where(u => !adminUserIds.Contains(u.Id))
                 .OrderByDescending(u => u.FollowerCount)
                 .Take(3)
                 .Select(u => new SuggestedUserDTO
@@ -469,7 +503,7 @@ namespace HealthCareBlog_Backend.Services
                 throw new BadRequestException("Failed to update avatar: " + string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
-            return user.ToViewAccountDTO();
+            return await user.ToViewAccountDTOAsync(_userManager);
         }
 
         // Admin methods
@@ -519,7 +553,9 @@ namespace HealthCareBlog_Backend.Services
                 throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
-            if (user.IsAdmin)
+            // Check if user is admin
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Contains("Admin"))
             {
                 throw new BadRequestException("Không thể khóa tài khoản admin.");
             }
@@ -567,6 +603,72 @@ namespace HealthCareBlog_Backend.Services
             return stats;
         }
 
+        public async Task<UserRolesDTO> GetUserRolesAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new NotFoundException("Không tìm thấy người dùng.");
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return new UserRolesDTO
+            {
+                UserId = user.Id!,
+                Email = user.Email!,
+                FullName = user.FullName ?? string.Empty,
+                Roles = roles.ToList()
+            };
+        }
+
+        public async Task<UserRolesDTO> UpdateUserRolesAsync(string userId, List<string> roles)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new NotFoundException("Không tìm thấy người dùng.");
+            }
+
+            // Validate roles
+            var validRoles = new[] { "Admin", "User" };
+            var invalidRoles = roles.Where(r => !validRoles.Contains(r)).ToList();
+            if (invalidRoles.Any())
+            {
+                throw new BadRequestException($"Roles không hợp lệ: {string.Join(", ", invalidRoles)}. Chỉ chấp nhận: Admin, User");
+            }
+
+            // Remove all current roles
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (currentRoles.Any())
+            {
+                var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                if (!removeResult.Succeeded)
+                {
+                    throw new BadRequestException("Không thể xóa roles hiện tại: " + string.Join(", ", removeResult.Errors.Select(e => e.Description)));
+                }
+            }
+
+            // Add new roles
+            if (roles.Any())
+            {
+                var addResult = await _userManager.AddToRolesAsync(user, roles);
+                if (!addResult.Succeeded)
+                {
+                    throw new BadRequestException("Không thể thêm roles mới: " + string.Join(", ", addResult.Errors.Select(e => e.Description)));
+                }
+            }
+
+            // Return updated roles
+            var updatedRoles = await _userManager.GetRolesAsync(user);
+            return new UserRolesDTO
+            {
+                UserId = user.Id!,
+                Email = user.Email!,
+                FullName = user.FullName ?? string.Empty,
+                Roles = updatedRoles.ToList()
+            };
+        }
+
         private async Task<string> GenerateJwtTokenAsync(Models.Entities.User user)
         {
             var roles = await _userManager.GetRolesAsync(user);
@@ -577,6 +679,7 @@ namespace HealthCareBlog_Backend.Services
                 new Claim(ClaimTypes.Name, user.FullName ?? user.Email!)
             };
 
+            // Add roles from Identity system
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));

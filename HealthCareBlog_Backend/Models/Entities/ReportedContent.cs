@@ -46,15 +46,31 @@ public class ReportedContent
 
     [Column("reporter_id")]
     [StringLength(450)]
-    [Required]
-    public string ReporterId { get; set; } = string.Empty;
+    public string? ReporterId { get; set; }
 
     [Column("resolved_by_id")]
     [StringLength(450)]
     public string? ResolvedById { get; set; }
 
+    // Snapshot fields - lưu thông tin tại thời điểm báo cáo
+    [Column("reporter_fullname")]
+    [StringLength(255)]
+    public string? ReporterFullName { get; set; }
+
+    [Column("target_user_id")]
+    [StringLength(450)]
+    public string? TargetUserId { get; set; }
+
+    [Column("target_user_fullname")]
+    [StringLength(255)]
+    public string? TargetUserFullName { get; set; }
+
+    [Column("target_content_snapshot")]
+    [StringLength(2000)]
+    public string? TargetContentSnapshot { get; set; }
+
     [ForeignKey("ReporterId")]
-    public virtual User Reporter { get; set; } = null!;
+    public virtual User? Reporter { get; set; }
 
     [ForeignKey("ResolvedById")]
     public virtual User? ResolvedBy { get; set; }

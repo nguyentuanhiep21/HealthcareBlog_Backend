@@ -1,12 +1,14 @@
 using HealthCareBlog_Backend.Models.DTOs.Users;
 using HealthCareBlog_Backend.Models.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace HealthCareBlog_Backend.Models.Mapper
 {
     public static class UserMapper
     {
-        public static ViewAccountDTO ToViewAccountDTO(this User user)
+        public static async Task<ViewAccountDTO> ToViewAccountDTOAsync(this User user, UserManager<User> userManager)
         {
+            var roles = await userManager.GetRolesAsync(user);
             return new ViewAccountDTO
             {
                 Id = user.Id!,
@@ -17,7 +19,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 PhoneNumber = user.PhoneNumber,
                 Bio = user.Bio,
                 AvatarUrl = string.IsNullOrEmpty(user.AvatarUrl) ? "/images/logo.png" : user.AvatarUrl,
-                IsAdmin = user.IsAdmin
+                IsAdmin = roles.Contains("Admin")
             };
         }
 

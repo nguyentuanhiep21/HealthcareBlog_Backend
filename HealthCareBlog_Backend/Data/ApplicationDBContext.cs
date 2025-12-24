@@ -28,7 +28,6 @@ namespace HealthCareBlog_Backend.Data
 
         // System
         public DbSet<Notification> Notifications => Set<Notification>();
-        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
         public DbSet<ReportedContent> ReportedContents => Set<ReportedContent>();
         public DbSet<ReportedContent> Reports => Set<ReportedContent>(); // Alias for ReportedContents
 
@@ -184,18 +183,6 @@ namespace HealthCareBlog_Backend.Data
                 entity.HasIndex(e => e.UserId);
                 entity.HasIndex(e => e.IsRead);
                 entity.HasIndex(e => new { e.UserId, e.IsRead });
-            });
-
-            // ========== AUDIT LOG CONFIGURATION ==========
-            modelBuilder.Entity<AuditLog>(entity =>
-            {
-                entity.HasOne(al => al.Admin)
-                    .WithMany()
-                    .HasForeignKey(al => al.AdminId)
-                    .OnDelete(DeleteBehavior.Restrict); // Giữ lại audit logs
-
-                entity.HasIndex(e => e.AdminId);
-                entity.HasIndex(e => new { e.EntityType, e.EntityId });
             });
 
             // ========== REPORTED CONTENT CONFIGURATION ==========

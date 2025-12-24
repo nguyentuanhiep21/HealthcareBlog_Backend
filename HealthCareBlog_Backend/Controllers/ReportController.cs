@@ -87,5 +87,47 @@ namespace HealthCareBlog_Backend.Controllers
             var result = await _reportService.DeleteReportAsync(reportId);
             return Ok(new { message = "Report deleted successfully.", success = result });
         }
+
+        [HttpPut("{reportId}/process-user")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ViewReportDTO>> ProcessUserReport(int reportId, [FromBody] ProcessUserReportDTO processReportDTO)
+        {
+            var adminId = User.GetUserId();
+            if (string.IsNullOrEmpty(adminId))
+            {
+                return Unauthorized("User not authenticated.");
+            }
+
+            var report = await _reportService.ProcessUserReportAsync(adminId, reportId, processReportDTO);
+            return Ok(new { message = "User report processed successfully.", data = report });
+        }
+
+        [HttpPut("{reportId}/process-post")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ViewReportDTO>> ProcessPostReport(int reportId, [FromBody] ProcessPostReportDTO processReportDTO)
+        {
+            var adminId = User.GetUserId();
+            if (string.IsNullOrEmpty(adminId))
+            {
+                return Unauthorized("User not authenticated.");
+            }
+
+            var report = await _reportService.ProcessPostReportAsync(adminId, reportId, processReportDTO);
+            return Ok(new { message = "Post report processed successfully.", data = report });
+        }
+
+        [HttpPut("{reportId}/process-comment")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ViewReportDTO>> ProcessCommentReport(int reportId, [FromBody] ProcessCommentReportDTO processReportDTO)
+        {
+            var adminId = User.GetUserId();
+            if (string.IsNullOrEmpty(adminId))
+            {
+                return Unauthorized("User not authenticated.");
+            }
+
+            var report = await _reportService.ProcessCommentReportAsync(adminId, reportId, processReportDTO);
+            return Ok(new { message = "Comment report processed successfully.", data = report });
+        }
     }
 }

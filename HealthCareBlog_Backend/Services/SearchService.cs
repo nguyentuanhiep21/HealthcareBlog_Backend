@@ -28,16 +28,26 @@ namespace HealthCareBlog_Backend.Services
 
             var normalizedQuery = query.ToLower().Trim();
 
+            // Get all admin user IDs
+            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+            var adminUserIds = adminRole != null 
+                ? await _context.UserRoles
+                    .Where(ur => ur.RoleId == adminRole.Id)
+                    .Select(ur => ur.UserId)
+                    .ToListAsync()
+                : new List<string>();
+
             var posts = await SearchPostsInternalAsync(userId, normalizedQuery, page, pageSize);
             var users = await SearchUsersInternalAsync(userId, normalizedQuery, page, pageSize);
 
             var totalPosts = await _context.Posts
-                .Where(p => p.Content.ToLower().Contains(normalizedQuery))
+                .Where(p => !adminUserIds.Contains(p.UserId) && p.Content.ToLower().Contains(normalizedQuery))
                 .CountAsync();
 
             var totalUsers = await _context.Users
-                .Where(u => u.FullName!.ToLower().Contains(normalizedQuery) || 
-                           u.Email!.ToLower().Contains(normalizedQuery))
+                .Where(u => !adminUserIds.Contains(u.Id) && 
+                           (u.FullName!.ToLower().Contains(normalizedQuery) || 
+                            u.Email!.ToLower().Contains(normalizedQuery)))
                 .CountAsync();
 
             return new SearchResultDTO
@@ -81,11 +91,20 @@ namespace HealthCareBlog_Backend.Services
 
         private async Task<List<SearchPostResultDTO>> SearchPostsInternalAsync(string? userId, string normalizedQuery, int page, int pageSize)
         {
+            // Get all admin user IDs
+            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+            var adminUserIds = adminRole != null 
+                ? await _context.UserRoles
+                    .Where(ur => ur.RoleId == adminRole.Id)
+                    .Select(ur => ur.UserId)
+                    .ToListAsync()
+                : new List<string>();
+
             var posts = await _context.Posts
                 .Include(p => p.User)
                 .Include(p => p.Likes)
                 .Include(p => p.SavedByUsers)
-                .Where(p => p.Content.ToLower().Contains(normalizedQuery))
+                .Where(p => !adminUserIds.Contains(p.UserId) && p.Content.ToLower().Contains(normalizedQuery))
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -96,10 +115,20 @@ namespace HealthCareBlog_Backend.Services
 
         private async Task<List<SearchUserResultDTO>> SearchUsersInternalAsync(string? userId, string normalizedQuery, int page, int pageSize)
         {
+            // Get all admin user IDs
+            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+            var adminUserIds = adminRole != null 
+                ? await _context.UserRoles
+                    .Where(ur => ur.RoleId == adminRole.Id)
+                    .Select(ur => ur.UserId)
+                    .ToListAsync()
+                : new List<string>();
+
             var users = await _context.Users
                 .Include(u => u.Followers)
-                .Where(u => u.FullName!.ToLower().Contains(normalizedQuery) || 
-                           u.Email!.ToLower().Contains(normalizedQuery))
+                .Where(u => !adminUserIds.Contains(u.Id) && 
+                           (u.FullName!.ToLower().Contains(normalizedQuery) || 
+                            u.Email!.ToLower().Contains(normalizedQuery)))
                 .OrderByDescending(u => u.FollowerCount)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

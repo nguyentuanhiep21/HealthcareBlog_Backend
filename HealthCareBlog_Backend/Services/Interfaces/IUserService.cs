@@ -22,5 +22,7 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<List<AdminUserDTO>> GetAllUsersAsync(int page = 1, int pageSize = 20, string? searchQuery = null);
         Task<bool> ToggleUserLockAsync(string adminId, string userId, string? reason = null);
         Task<AdminStatsDTO> GetAdminStatsAsync();
+        Task<UserRolesDTO> GetUserRolesAsync(string userId);
+        Task<UserRolesDTO> UpdateUserRolesAsync(string userId, List<string> roles);
     }
 }

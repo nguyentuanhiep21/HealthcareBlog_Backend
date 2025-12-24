@@ -147,6 +147,58 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Seed Admin Role and Default Admin User
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<User>>();
+        
+        // Create roles if they don't exist
+        string[] roles = { "Admin", "User" };
+        foreach (var roleName in roles)
+        {
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole(roleName));
+            }
+        }
+        
+        // Create default admin user if doesn't exist
+        var adminEmail = "admin@healthcareblog.com";
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        
+        if (adminUser == null)
+        {
+            adminUser = new User
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                FullName = "System Admin",
+                EmailConfirmed = true,
+                AvatarUrl = "/images/logo.png"
+            };
+            
+            var result = await userManager.CreateAsync(adminUser, "Admin@123456");
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+        }
+        else if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+
 // Configure CORS - Must be before other middleware
 app.UseCors("AllowFrontend");
 

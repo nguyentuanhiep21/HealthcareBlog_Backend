@@ -4,6 +4,7 @@ using HealthCareBlog_Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HealthCareBlog_Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251224175342_AddReportSnapshotFields")]
+    partial class AddReportSnapshotFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -329,12 +332,8 @@ namespace HealthCareBlog_Backend.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("reason");
 
-                    b.Property<string>("ReporterFullName")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("reporter_fullname");
-
                     b.Property<string>("ReporterId")
+                        .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("reporter_id");
@@ -358,6 +357,11 @@ namespace HealthCareBlog_Backend.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)")
                         .HasColumnName("target_content_snapshot");
+
+                    b.Property<string>("TargetUserAvatar")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("target_user_avatar");
 
                     b.Property<string>("TargetUserFullName")
                         .HasMaxLength(255)
@@ -818,7 +822,8 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "Reporter")
                         .WithMany("Reports")
                         .HasForeignKey("ReporterId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("HealthCareBlog_Backend.Models.Entities.User", "ResolvedBy")
                         .WithMany()

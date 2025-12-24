@@ -363,6 +363,65 @@ namespace HealthCareBlog_Backend.Controllers
             }
         }
 
+        /// <summary>
+        /// Get user roles (Swagger only - for testing/development)
+        /// </summary>
+        [HttpGet("{userId}/roles")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserRolesDTO>> GetUserRoles(string userId)
+        {
+            try
+            {
+                var userRoles = await _userService.GetUserRolesAsync(userId);
+                return Ok(userRoles);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
+        /// <summary>
+        /// Update user roles (Swagger only - for testing/development)
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     PUT /api/user/roles
+        ///     {
+        ///         "userId": "user-guid-here",
+        ///         "roles": ["Admin", "User"]
+        ///     }
+        ///     
+        /// Valid roles: Admin, User
+        /// </remarks>
+        [HttpPut("roles")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserRolesDTO>> UpdateUserRoles([FromBody] UpdateUserRolesDTO updateUserRolesDTO)
+        {
+            try
+            {
+                var userRoles = await _userService.UpdateUserRolesAsync(updateUserRolesDTO.UserId, updateUserRolesDTO.Roles);
+                return Ok(new { message = "Cập nhật roles thành công.", success = true, data = userRoles });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
         [HttpPut("avatar")]
         [Authorize]
         public async Task<ActionResult<ViewAccountDTO>> UpdateAvatar([FromBody] UpdateAvatarDTO updateAvatarDTO)
