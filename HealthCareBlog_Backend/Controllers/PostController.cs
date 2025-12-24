@@ -274,5 +274,45 @@ namespace HealthCareBlog_Backend.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
             }
         }
+
+        [HttpGet("admin/all")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<List<ViewPostDTO>>> GetAllPostsForAdmin(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? searchQuery = null)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                var posts = await _postService.GetAllPostsForAdminAsync(userId, page, pageSize, searchQuery);
+                return Ok(posts);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PostController] GetAllPostsForAdmin Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
+        [HttpDelete("admin/{postId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> AdminDeletePost(int postId)
+        {
+            try
+            {
+                var result = await _postService.DeletePostAsync(postId);
+                return Ok(new { message = "Xóa bài viết thành công.", success = result });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PostController] AdminDeletePost Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
     }
 }

@@ -213,5 +213,37 @@ namespace HealthCareBlog_Backend.Services
             await _context.SaveChangesAsync();
             return true; // Return true để biết là đã unlike
         }
+
+        // Admin method
+        public async Task<bool> AdminDeleteCommentAsync(int commentId)
+        {
+            var comment = await _context.Comments.FindAsync(commentId);
+
+            if (comment == null)
+            {
+                throw new NotFoundException("Comment not found.");
+            }
+
+            var post = await _context.Posts.FindAsync(comment.PostId);
+
+            var commentLikes = await _context.LikeComments
+                .Where(l => l.CommentId == commentId)
+                .ToListAsync();
+
+            if (commentLikes.Any())
+            {
+                _context.LikeComments.RemoveRange(commentLikes);
+            }
+
+            _context.Comments.Remove(comment);
+
+            if (post != null && post.CommentCount > 0)
+            {
+                post.CommentCount--;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

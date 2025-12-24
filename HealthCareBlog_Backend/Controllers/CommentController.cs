@@ -225,5 +225,26 @@ namespace HealthCareBlog_Backend.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
             }
         }
+
+        [HttpDelete("admin/{commentId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> AdminDeleteComment(int commentId)
+        {
+            try
+            {
+                // Admin can delete without user id check
+                var result = await _commentService.AdminDeleteCommentAsync(commentId);
+                return Ok(new { message = "Xóa bình luận thành công.", success = result });
+            }
+            catch (HealthCareBlog_Backend.Exceptions.NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CommentController] AdminDeleteComment Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
     }
 }

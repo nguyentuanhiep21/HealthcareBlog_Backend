@@ -30,6 +30,7 @@ namespace HealthCareBlog_Backend.Data
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
         public DbSet<ReportedContent> ReportedContents => Set<ReportedContent>();
+        public DbSet<ReportedContent> Reports => Set<ReportedContent>(); // Alias for ReportedContents
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

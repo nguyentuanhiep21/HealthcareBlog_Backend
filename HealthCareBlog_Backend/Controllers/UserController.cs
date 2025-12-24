@@ -300,6 +300,69 @@ namespace HealthCareBlog_Backend.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
             }
         }
+
+        [HttpGet("admin/all")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<List<AdminUserDTO>>> GetAllUsers(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? searchQuery = null)
+        {
+            try
+            {
+                var users = await _userService.GetAllUsersAsync(page, pageSize, searchQuery);
+                return Ok(users);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
+        [HttpPut("{userId}/toggle-lock")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> ToggleUserLock(string userId, [FromBody] ToggleUserLockDTO? dto)
+        {
+            try
+            {
+                var adminId = User.GetUserId();
+                if (string.IsNullOrEmpty(adminId))
+                {
+                    return Unauthorized(new { message = "User not authenticated.", success = false });
+                }
+
+                var result = await _userService.ToggleUserLockAsync(adminId, userId, dto?.Reason);
+                return Ok(new { message = "User lock status updated successfully.", success = result });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
+        [HttpGet("admin/stats")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<AdminStatsDTO>> GetAdminStats()
+        {
+            try
+            {
+                var stats = await _userService.GetAdminStatsAsync();
+                return Ok(stats);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
         [HttpPut("avatar")]
         [Authorize]
         public async Task<ActionResult<ViewAccountDTO>> UpdateAvatar([FromBody] UpdateAvatarDTO updateAvatarDTO)

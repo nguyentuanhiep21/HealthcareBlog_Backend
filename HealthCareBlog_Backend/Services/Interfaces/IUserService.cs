@@ -17,5 +17,10 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<ViewAccountDTO> UpdateAccountInfoAsync(string userId, UpdateAccountDTO updateAccountDTO);
         Task<List<SuggestedUserDTO>> GetSuggestedUsersAsync(string? currentUserId);
         Task<ViewAccountDTO> UpdateAvatarAsync(string userId, string avatarUrl);
+        
+        // Admin methods
+        Task<List<AdminUserDTO>> GetAllUsersAsync(int page = 1, int pageSize = 20, string? searchQuery = null);
+        Task<bool> ToggleUserLockAsync(string adminId, string userId, string? reason = null);
+        Task<AdminStatsDTO> GetAdminStatsAsync();
     }
 }

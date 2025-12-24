@@ -472,6 +472,101 @@ namespace HealthCareBlog_Backend.Services
             return user.ToViewAccountDTO();
         }
 
+        // Admin methods
+        public async Task<List<AdminUserDTO>> GetAllUsersAsync(int page = 1, int pageSize = 20, string? searchQuery = null)
+        {
+            var query = _context.Users.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var lowerQuery = searchQuery.ToLower();
+                query = query.Where(u => 
+                    u.FullName!.ToLower().Contains(lowerQuery) || 
+                    u.Email!.ToLower().Contains(lowerQuery) ||
+                    u.UserName!.ToLower().Contains(lowerQuery));
+            }
+
+            var users = await query
+                .OrderByDescending(u => u.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new AdminUserDTO
+                {
+                    Id = u.Id,
+                    Username = u.UserName ?? "",
+                    Email = u.Email ?? "",
+                    FullName = u.FullName,
+                    Bio = u.Bio,
+                    AvatarUrl = u.AvatarUrl,
+                    FollowersCount = u.FollowerCount,
+                    FollowingCount = u.FollowingCount,
+                    PostsCount = u.PostCount,
+                    IsLocked = u.IsLocked,
+                    CreatedAt = DateTime.UtcNow, // You may want to add CreatedAt to User entity
+                    LockedAt = u.LockedAt
+                })
+                .ToListAsync();
+
+            return users;
+        }
+
+        public async Task<bool> ToggleUserLockAsync(string adminId, string userId, string? reason = null)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            
+            if (user == null)
+            {
+                throw new NotFoundException("Không tìm thấy người dùng.");
+            }
+
+            if (user.IsAdmin)
+            {
+                throw new BadRequestException("Không thể khóa tài khoản admin.");
+            }
+
+            user.IsLocked = !user.IsLocked;
+            user.LockedAt = user.IsLocked ? DateTime.UtcNow : null;
+            user.LockReason = user.IsLocked ? reason : null;
+
+            var result = await _userManager.UpdateAsync(user);
+            
+            if (!result.Succeeded)
+            {
+                throw new BadRequestException("Không thể cập nhật trạng thái người dùng.");
+            }
+
+            return true;
+        }
+
+        public async Task<AdminStatsDTO> GetAdminStatsAsync()
+        {
+            var today = DateTime.UtcNow.Date;
+
+            var totalUsers = await _context.Users.CountAsync();
+            var lockedUsers = await _context.Users.CountAsync(u => u.IsLocked);
+
+            var stats = new AdminStatsDTO
+            {
+                TotalUsers = totalUsers,
+                TotalPosts = await _context.Posts.CountAsync(),
+                TotalComments = await _context.Comments.CountAsync(),
+                PendingReports = await _context.Reports.CountAsync(r => r.Status == "Pending"),
+                LockedUsers = lockedUsers,
+                ActiveUsers = totalUsers - lockedUsers,
+                NewUsersToday = 0, // You may want to add CreatedAt to track this
+                NewPostsToday = await _context.Posts.CountAsync(p => p.CreatedAt >= today),
+                
+                // Detailed report stats
+                UserReports = await _context.Reports.CountAsync(r => r.ContentType == "User"),
+                PostReports = await _context.Reports.CountAsync(r => r.ContentType == "Post"),
+                CommentReports = await _context.Reports.CountAsync(r => r.ContentType == "Comment"),
+                ResolvedReports = await _context.Reports.CountAsync(r => r.Status == "Resolved"),
+                RejectedReports = await _context.Reports.CountAsync(r => r.Status == "Rejected")
+            };
+
+            return stats;
+        }
+
         private async Task<string> GenerateJwtTokenAsync(Models.Entities.User user)
         {
             var roles = await _userManager.GetRolesAsync(user);

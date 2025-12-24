@@ -334,5 +334,32 @@ namespace HealthCareBlog_Backend.Services
             await _context.SaveChangesAsync();
             return true; // Return true để biết là đã unlike
         }
+
+        // Admin methods
+        public async Task<List<ViewPostDTO>> GetAllPostsForAdminAsync(string? userId, int page = 1, int pageSize = 20, string? searchQuery = null)
+        {
+            var query = _context.Posts
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                .Include(p => p.SavedByUsers)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var lowerQuery = searchQuery.ToLower();
+                query = query.Where(p => 
+                    p.Content.ToLower().Contains(lowerQuery) || 
+                    p.User.FullName!.ToLower().Contains(lowerQuery) ||
+                    p.User.UserName!.ToLower().Contains(lowerQuery));
+            }
+
+            var posts = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return posts.Select(p => p.ToViewPostDTO(userId)).ToList();
+        }
     }
 }

@@ -10,5 +10,8 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<bool> DeleteCommentAsync(string AuthorId, int commentId);
         Task<bool> LikeCommentAsync(string UserId, int commentId);
         Task<bool> UnlikeLikeCommentAsync(string UserId, int commentId);
+        
+        // Admin method
+        Task<bool> AdminDeleteCommentAsync(int commentId);
     }
 }

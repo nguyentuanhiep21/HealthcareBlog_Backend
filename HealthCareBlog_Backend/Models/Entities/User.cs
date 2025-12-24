@@ -82,6 +82,16 @@ public class User : IdentityUser
     [Column("is_admin")]
     public bool IsAdmin { get; set; } = false;
 
+    [Column("is_locked")]
+    public bool IsLocked { get; set; } = false;
+
+    [Column("locked_at")]
+    public DateTime? LockedAt { get; set; }
+
+    [Column("lock_reason")]
+    [StringLength(500)]
+    public string? LockReason { get; set; }
+
     // ========== NAVIGATION PROPERTIES ==========
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
