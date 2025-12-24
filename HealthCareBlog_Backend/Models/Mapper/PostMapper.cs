@@ -51,21 +51,5 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 }
             };
         }
-
-        public static AdminPostDTO ToAdminPostDTO(this Post post)
-        {
-            return new AdminPostDTO
-            {
-                Id = post.Id,
-                UserId = post.UserId,
-                UserName = post.User?.FullName ?? post.User?.UserName ?? "Unknown",
-                UserAvatar = post.User?.AvatarUrl,
-                Content = post.Content,
-                ImageUrl = post.ImageUrl,
-                LikesCount = post.LikeCount,
-                CommentsCount = post.CommentCount,
-                CreatedAt = post.CreatedAt
-            };
-        }
     }
 }

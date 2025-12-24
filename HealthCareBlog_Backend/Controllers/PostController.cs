@@ -275,26 +275,6 @@ namespace HealthCareBlog_Backend.Controllers
             }
         }
 
-        [HttpGet("admin/all")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<List<AdminPostDTO>>> GetAllPostsForAdmin(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20,
-            [FromQuery] string? searchQuery = null)
-        {
-            try
-            {
-                var userId = User.GetUserId();
-                var posts = await _postService.GetAllPostsForAdminAsync(userId, page, pageSize, searchQuery);
-                return Ok(posts);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[PostController] GetAllPostsForAdmin Exception: {ex.Message}");
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
         [HttpDelete("admin/{postId}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> AdminDeletePost(int postId)

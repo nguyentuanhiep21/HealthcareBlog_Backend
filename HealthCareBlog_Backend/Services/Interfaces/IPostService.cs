@@ -12,8 +12,5 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<bool> LikePostAsync(string UserId, int postId);
         Task<bool> UnlikePostAsync(string UserId, int postId);
         Task<List<ViewPostDTO>> GetTrendingPostsAsync(string? UserId);
-        
-        // Admin methods
-        Task<List<AdminPostDTO>> GetAllPostsForAdminAsync(string? userId, int page = 1, int pageSize = 20, string? searchQuery = null);
     }
 }
