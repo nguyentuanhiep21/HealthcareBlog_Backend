@@ -14,6 +14,6 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<List<ViewPostDTO>> GetTrendingPostsAsync(string? UserId);
         
         // Admin methods
-        Task<List<ViewPostDTO>> GetAllPostsForAdminAsync(string? userId, int page = 1, int pageSize = 20, string? searchQuery = null);
+        Task<List<AdminPostDTO>> GetAllPostsForAdminAsync(string? userId, int page = 1, int pageSize = 20, string? searchQuery = null);
     }
 }

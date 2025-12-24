@@ -158,7 +158,7 @@ namespace HealthCareBlog_Backend.Services
                 {
                     Id = f.FollowingUser.Id!,
                     FullName = f.FollowingUser.FullName ?? "Unknown",
-                    AvatarUrl = f.FollowingUser.AvatarUrl ?? "/images/logo.png",
+                    AvatarUrl = f.FollowingUser.AvatarUrl,
                     Bio = f.FollowingUser.Bio,
                     FollowerCount = f.FollowingUser.FollowerCount,
                     FollowingCount = f.FollowingUser.FollowingCount,
@@ -186,7 +186,7 @@ namespace HealthCareBlog_Backend.Services
                 {
                     Id = f.Follower.Id!,
                     FullName = f.Follower.FullName ?? "Unknown",
-                    AvatarUrl = f.Follower.AvatarUrl ?? "/images/logo.png",
+                    AvatarUrl = f.Follower.AvatarUrl,
                     Bio = f.Follower.Bio,
                     FollowerCount = f.Follower.FollowerCount,
                     FollowingCount = f.Follower.FollowingCount,

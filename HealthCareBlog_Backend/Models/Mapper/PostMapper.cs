@@ -22,7 +22,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 {
                     Id = post.User?.Id ?? "",
                     FullName = post.User?.FullName ?? "Unknown",
-                    AvatarUrl = string.IsNullOrEmpty(post.User?.AvatarUrl) ? "/images/logo.png" : post.User.AvatarUrl,
+                    AvatarUrl = post.User?.AvatarUrl,
                 }
             };
         }
@@ -45,10 +45,26 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 {
                     Id = post.User?.Id ?? "",
                     FullName = post.User?.FullName ?? "Unknown",
-                    AvatarUrl = string.IsNullOrEmpty(post.User?.AvatarUrl) ? "/images/logo.png" : post.User.AvatarUrl,
+                    AvatarUrl = post.User?.AvatarUrl,
                     Bio = post.User?.Bio,
                     IsFollowing = userId != null && post.User != null && post.User.Followers.Any(f => f.FollowerId == userId)
                 }
+            };
+        }
+
+        public static AdminPostDTO ToAdminPostDTO(this Post post)
+        {
+            return new AdminPostDTO
+            {
+                Id = post.Id,
+                UserId = post.UserId,
+                UserName = post.User?.FullName ?? post.User?.UserName ?? "Unknown",
+                UserAvatar = post.User?.AvatarUrl,
+                Content = post.Content,
+                ImageUrl = post.ImageUrl,
+                LikesCount = post.LikeCount,
+                CommentsCount = post.CommentCount,
+                CreatedAt = post.CreatedAt
             };
         }
     }

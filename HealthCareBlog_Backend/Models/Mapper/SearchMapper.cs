@@ -12,7 +12,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 Id = post.Id,
                 AuthorId = post.UserId,
                 AuthorName = post.User?.FullName ?? "Unknown",
-                AuthorAvatarUrl = post.User?.AvatarUrl ?? "/images/logo.png",
+                AuthorAvatarUrl = post.User?.AvatarUrl,
                 AuthorBio = post.User?.Bio,
                 AuthorFollowerCount = post.User?.FollowerCount ?? 0,
                 AuthorFollowingCount = post.User?.FollowingCount ?? 0,
@@ -33,7 +33,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 Id = user.Id!,
                 FullName = user.FullName ?? "Unknown",
                 Email = user.Email,
-                AvatarUrl = string.IsNullOrEmpty(user.AvatarUrl) ? "/images/logo.png" : user.AvatarUrl,
+                AvatarUrl = user.AvatarUrl,
                 FollowerCount = user.FollowerCount,
                 FollowingCount = user.FollowingCount,
                 IsFollowedByCurrentUser = currentUserId != null && user.Followers.Any(f => f.FollowerId == currentUserId)

@@ -277,7 +277,7 @@ namespace HealthCareBlog_Backend.Controllers
 
         [HttpGet("admin/all")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<List<ViewPostDTO>>> GetAllPostsForAdmin(
+        public async Task<ActionResult<List<AdminPostDTO>>> GetAllPostsForAdmin(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
             [FromQuery] string? searchQuery = null)

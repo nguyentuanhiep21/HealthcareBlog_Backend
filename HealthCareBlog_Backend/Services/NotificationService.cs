@@ -38,7 +38,7 @@ namespace HealthCareBlog_Backend.Services
                     {
                         Id = n.Actor.Id!,
                         FullName = n.Actor.FullName ?? "Unknown",
-                        AvatarUrl = n.Actor.AvatarUrl ?? "/images/logo.png"
+                        AvatarUrl = n.Actor.AvatarUrl
                     } : null,
                     PostId = n.PostId,
                     CommentId = n.CommentId

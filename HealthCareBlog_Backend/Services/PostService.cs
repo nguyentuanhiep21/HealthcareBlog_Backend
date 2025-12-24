@@ -336,7 +336,7 @@ namespace HealthCareBlog_Backend.Services
         }
 
         // Admin methods
-        public async Task<List<ViewPostDTO>> GetAllPostsForAdminAsync(string? userId, int page = 1, int pageSize = 20, string? searchQuery = null)
+        public async Task<List<AdminPostDTO>> GetAllPostsForAdminAsync(string? userId, int page = 1, int pageSize = 20, string? searchQuery = null)
         {
             var query = _context.Posts
                 .Include(p => p.User)
@@ -359,7 +359,7 @@ namespace HealthCareBlog_Backend.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            return posts.Select(p => p.ToViewPostDTO(userId)).ToList();
+            return posts.Select(p => p.ToAdminPostDTO()).ToList();
         }
     }
 }
