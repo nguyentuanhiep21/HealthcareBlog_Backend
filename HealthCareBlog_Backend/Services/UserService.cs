@@ -3,6 +3,7 @@ using HealthCareBlog_Backend.Models.DTOs.Users;
 using HealthCareBlog_Backend.Services.Interfaces;
 using HealthCareBlog_Backend.Exceptions;
 using HealthCareBlog_Backend.Models.Mapper;
+using HealthCareBlog_Backend.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
@@ -321,12 +322,21 @@ namespace HealthCareBlog_Backend.Services
                 throw new NotFoundException("Không tìm thấy người dùng.");
             }
 
+            // Delete user avatar if exists
+            FileHelper.DeleteAvatar(user.AvatarUrl);
+
             var userPosts = await _context.Posts
                 .Where(p => p.UserId == userId)
                 .ToListAsync();
             
             foreach (var post in userPosts)
             {
+                // Delete post image if exists
+                if (!string.IsNullOrEmpty(post.ImageUrl))
+                {
+                    FileHelper.DeletePostImage(post.ImageUrl);
+                }
+
                 var postLikes = await _context.LikePosts
                     .Where(l => l.PostId == post.Id)
                     .ToListAsync();
@@ -449,24 +459,7 @@ namespace HealthCareBlog_Backend.Services
             }
 
             // Delete old avatar if it's not the default logo
-            if (!string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl != "/images/logo.png" && user.AvatarUrl.StartsWith("/uploads/avatars/"))
-            {
-                try
-                {
-                    var oldImagePath = user.AvatarUrl.TrimStart('/');
-                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", oldImagePath);
-                    
-                    if (File.Exists(fullPath))
-                    {
-                        File.Delete(fullPath);
-                        Console.WriteLine($"[UserService] Deleted old avatar: {fullPath}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[UserService] Error deleting old avatar: {ex.Message}");
-                }
-            }
+            FileHelper.DeleteAvatar(user.AvatarUrl);
 
             user.AvatarUrl = avatarUrl;
             var result = await _userManager.UpdateAsync(user);

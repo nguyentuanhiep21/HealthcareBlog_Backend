@@ -490,3 +490,6 @@ $RECYCLE.BIN/
 appsettings.json
 appsettings.Development.json
 appsettings.*.json
+
+# Uploaded files
+wwwroot/uploads/
