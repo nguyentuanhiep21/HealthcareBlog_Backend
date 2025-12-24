@@ -16,7 +16,8 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 Email = user.Email ?? string.Empty,
                 PhoneNumber = user.PhoneNumber,
                 Bio = user.Bio,
-                AvatarUrl = string.IsNullOrEmpty(user.AvatarUrl) ? "/images/logo.png" : user.AvatarUrl
+                AvatarUrl = string.IsNullOrEmpty(user.AvatarUrl) ? "/images/logo.png" : user.AvatarUrl,
+                IsAdmin = user.IsAdmin
             };
         }
 

@@ -79,6 +79,9 @@ public class User : IdentityUser
     [Column("post_count")]
     public int PostCount { get; set; } = 0;
 
+    [Column("is_admin")]
+    public bool IsAdmin { get; set; } = false;
+
     // ========== NAVIGATION PROPERTIES ==========
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
