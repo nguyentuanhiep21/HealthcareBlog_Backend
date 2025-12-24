@@ -54,7 +54,7 @@ namespace HealthCareBlog_Backend.Services
                 Email = signupDTO.Email,
                 PhoneNumber = signupDTO.PhoneNumber,
                 EmailConfirmed = false,
-                AvatarUrl = "/images/logo.png", // Set default avatar
+                AvatarUrl = null, // No avatar set initially, frontend uses placeholder.svg
             };
             
             var result = await _userManager.CreateAsync(newUser, signupDTO.Password);
@@ -329,7 +329,10 @@ namespace HealthCareBlog_Backend.Services
             }
 
             // Delete user avatar if exists
-            FileHelper.DeleteAvatar(user.AvatarUrl);
+            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            {
+                FileHelper.DeleteAvatar(user.AvatarUrl);
+            }
 
             var userPosts = await _context.Posts
                 .Where(p => p.UserId == userId)
@@ -492,8 +495,11 @@ namespace HealthCareBlog_Backend.Services
                 throw new NotFoundException("User not found.");
             }
 
-            // Delete old avatar if it's not the default logo
-            FileHelper.DeleteAvatar(user.AvatarUrl);
+            // Delete old avatar if it exists
+            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            {
+                FileHelper.DeleteAvatar(user.AvatarUrl);
+            }
 
             user.AvatarUrl = avatarUrl;
             var result = await _userManager.UpdateAsync(user);

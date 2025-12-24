@@ -178,7 +178,7 @@ using (var scope = app.Services.CreateScope())
                 Email = adminEmail,
                 FullName = "System Admin",
                 EmailConfirmed = true,
-                AvatarUrl = "/images/logo.png"
+                AvatarUrl = null // No avatar set initially, frontend uses placeholder.svg
             };
             
             var result = await userManager.CreateAsync(adminUser, "Admin@123456");
