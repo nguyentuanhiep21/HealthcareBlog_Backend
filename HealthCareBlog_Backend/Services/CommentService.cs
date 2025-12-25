@@ -27,6 +27,8 @@ namespace HealthCareBlog_Backend.Services
             if (pageSize < 1) pageSize = 10;
             if (pageSize > 100) pageSize = 100; // Giới hạn tối đa 100 comments mỗi lần
             var comments = await _context.Comments
+                .Include(c => c.User)  
+                .Include(c => c.Likes)
                 .Where(c => c.PostId == postId)
                 .OrderByDescending(c => c.CreatedAt)
                 .Skip((page - 1) * pageSize) // Bỏ qua các comments của các trang trước
