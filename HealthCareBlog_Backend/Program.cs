@@ -130,20 +130,35 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowSpecific", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:5173",
-            "http://localhost:5174",
-            "http://localhost:5175",
+            "http://localhost:5216",
+            "https://localhost:7223",
             "http://localhost:3000",
-            "https://localhost:3000"
+            "https://localhost:3000",
+            "http://10.0.2.2:5216",
+            "https://10.0.2.2:7223"
             )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
 });
+
+// Configure Kestrel to listen on all interfaces
+builder.WebHost.ConfigureKestrel(options =>
+{
+    // HTTP
+    options.Listen(System.Net.IPAddress.Any, 5216);
+
+    // HTTPS
+    options.Listen(System.Net.IPAddress.Any, 7223, listenOptions =>
+    {
+        listenOptions.UseHttps();
+    });
+});
+
 
 var app = builder.Build();
 
@@ -155,7 +170,7 @@ using (var scope = app.Services.CreateScope())
     {
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<User>>();
-        
+
         // Create roles if they don't exist
         string[] roles = { "Admin", "User" };
         foreach (var roleName in roles)
@@ -165,11 +180,11 @@ using (var scope = app.Services.CreateScope())
                 await roleManager.CreateAsync(new IdentityRole(roleName));
             }
         }
-        
+
         // Create default admin user if doesn't exist
         var adminEmail = "admin@healthcareblog.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        
+
         if (adminUser == null)
         {
             adminUser = new User
@@ -180,7 +195,7 @@ using (var scope = app.Services.CreateScope())
                 EmailConfirmed = true,
                 AvatarUrl = null // No avatar set initially, frontend uses placeholder.svg
             };
-            
+
             var result = await userManager.CreateAsync(adminUser, "Admin@123456");
             if (result.Succeeded)
             {
@@ -200,7 +215,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure CORS - Must be before other middleware
-app.UseCors("AllowFrontend");
+app.UseCors("AllowSpecific");
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -219,7 +234,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseSession();
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();  // Tắt để cho phép kết nối Http từ máy ảo
 app.UseAuthentication();
 app.UseAuthorization();
 
