@@ -136,6 +136,13 @@ namespace HealthCareBlog_Backend.Services
                 _context.Notifications.RemoveRange(notifications);
             }
 
+            // Decrement post comment count
+            var post = await _context.Posts.FindAsync(comment.PostId);
+            if (post != null && post.CommentCount > 0)
+            {
+                post.CommentCount--;
+            }
+
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
             return true;
