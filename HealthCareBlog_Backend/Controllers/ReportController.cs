@@ -27,8 +27,22 @@ namespace HealthCareBlog_Backend.Controllers
                 return Unauthorized("User not authenticated.");
             }
 
-            var report = await _reportService.CreateReportAsync(userId, createReportDTO);
-            return Ok(new { message = "Report created successfully.", data = report });
+            var (report, isExisting) = await _reportService.CreateReportAsync(userId, createReportDTO);
+            
+            if (isExisting)
+            {
+                return Ok(new { 
+                    message = "Bạn đã báo cáo nội dung này trước đó rồi.", 
+                    data = report,
+                    isExisting = true
+                });
+            }
+
+            return Ok(new { 
+                message = "Report created successfully.", 
+                data = report,
+                isExisting = false
+            });
         }
 
         [HttpGet]

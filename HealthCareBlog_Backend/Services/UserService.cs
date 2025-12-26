@@ -459,14 +459,14 @@ namespace HealthCareBlog_Backend.Services
             var users = await _context.Users
                 .Include(u => u.Followers)
                 .Where(u => !adminUserIds.Contains(u.Id))
-                .OrderByDescending(u => u.FollowerCount)
+                .OrderByDescending(u => u.Followers.Count)
                 .Take(3)
                 .Select(u => new SuggestedUserDTO
                 {
                     Id = u.Id!,
                     FullName = u.FullName ?? "",
                     AvatarUrl = u.AvatarUrl,
-                    FollowerCount = u.FollowerCount,
+                    FollowerCount = u.Followers.Count,
                     IsFollowing = currentUserId != null && u.Followers.Any(f => f.FollowerId == currentUserId)
                 })
                 .ToListAsync();

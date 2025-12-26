@@ -35,7 +35,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 LastName = user.LastName,
                 Bio = user.Bio,
                 AvatarUrl = user.AvatarUrl,
-                FollowerCount = user.FollowerCount,
+                FollowerCount = user.Followers?.Count ?? 0,
                 FollowingCount = user.FollowingCount,
                 PostCount = user.PostCount,
                 IsFollowedByCurrentUser = currentUserId != null && user.Followers.Any(f => f.FollowerId == currentUserId)
