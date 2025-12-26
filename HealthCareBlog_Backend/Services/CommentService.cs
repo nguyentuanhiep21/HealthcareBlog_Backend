@@ -101,7 +101,13 @@ namespace HealthCareBlog_Backend.Services
 
             comment.Content = updateCommentDTO.Content;
             await _context.SaveChangesAsync();
-            return comment.ToCommentDetailDTO();
+            
+            // Reload comment with User data
+            var commentWithUser = await _context.Comments
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c => c.Id == commentId);
+            
+            return commentWithUser!.ToCommentDetailDTO();
         }
 
         public async Task<bool> DeleteCommentAsync(string AuthorId, int commentId)

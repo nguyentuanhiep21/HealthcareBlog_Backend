@@ -19,6 +19,8 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 PhoneNumber = user.PhoneNumber,
                 Bio = user.Bio,
                 AvatarUrl = user.AvatarUrl,
+                FollowerCount = user.FollowerCount,
+                FollowingCount = user.FollowingCount,
                 IsAdmin = roles.Contains("Admin")
             };
         }

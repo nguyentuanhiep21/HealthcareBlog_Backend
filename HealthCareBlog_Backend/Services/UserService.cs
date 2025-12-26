@@ -292,22 +292,10 @@ namespace HealthCareBlog_Backend.Services
                 }
             }
 
-            // Only update these fields if they are provided
-            if (updateAccountDTO.PhoneNumber != null)
-            {
-                user.PhoneNumber = updateAccountDTO.PhoneNumber;
-            }
-
             if (updateAccountDTO.Bio != null)
             {
                 user.Bio = updateAccountDTO.Bio;
             }
-
-            // Do NOT update avatar here - avatar is updated separately via UpdateAvatarAsync
-            // if (!string.IsNullOrWhiteSpace(updateAccountDTO.AvatarUrl))
-            // {
-            //     user.AvatarUrl = updateAccountDTO.AvatarUrl;
-            // }
 
             var result = await _userManager.UpdateAsync(user);
 
