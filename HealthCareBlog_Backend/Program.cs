@@ -122,6 +122,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INutritionService, NutritionService>();
 
 // Configure Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
