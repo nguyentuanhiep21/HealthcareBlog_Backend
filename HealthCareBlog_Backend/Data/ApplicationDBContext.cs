@@ -31,6 +31,11 @@ namespace HealthCareBlog_Backend.Data
         public DbSet<ReportedContent> ReportedContents => Set<ReportedContent>();
         public DbSet<ReportedContent> Reports => Set<ReportedContent>(); // Alias for ReportedContents
 
+        // Nutrition
+        public DbSet<NutritionProfile> NutritionProfiles => Set<NutritionProfile>();
+        public DbSet<NutritionChatSession> NutritionChatSessions => Set<NutritionChatSession>();
+        public DbSet<NutritionChatMessage> NutritionChatMessages => Set<NutritionChatMessage>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -200,6 +205,41 @@ namespace HealthCareBlog_Backend.Data
 
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => new { e.ContentType, e.ContentId });
+            });
+
+            // ========== NUTRITION PROFILE CONFIGURATION ==========
+            modelBuilder.Entity<NutritionProfile>(entity =>
+            {
+                entity.HasOne(np => np.User)
+                    .WithMany()
+                    .HasForeignKey(np => np.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(np => np.ActiveChatSession)
+                    .WithOne(ncs => ncs.NutritionProfile)
+                    .HasForeignKey<NutritionChatSession>(ncs => ncs.NutritionProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.UserId).IsUnique(); // One profile per user
+            });
+
+            // ========== NUTRITION CHAT SESSION CONFIGURATION ==========
+            modelBuilder.Entity<NutritionChatSession>(entity =>
+            {
+                entity.HasIndex(e => e.NutritionProfileId).IsUnique(); // One session per profile
+                entity.HasIndex(e => e.CreatedAt);
+            });
+
+            // ========== NUTRITION CHAT MESSAGE CONFIGURATION ==========
+            modelBuilder.Entity<NutritionChatMessage>(entity =>
+            {
+                entity.HasOne(ncm => ncm.Session)
+                    .WithMany(ncs => ncs.Messages)
+                    .HasForeignKey(ncm => ncm.SessionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => e.SessionId);
+                entity.HasIndex(e => e.CreatedAt);
             });
         }
     }
