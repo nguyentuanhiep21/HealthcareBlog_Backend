@@ -493,3 +493,4 @@ appsettings.*.json
 
 # Uploaded files
 wwwroot/uploads/
+wwwroot/images/
