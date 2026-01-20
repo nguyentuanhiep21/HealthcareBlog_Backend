@@ -35,7 +35,7 @@ namespace HealthCareBlog_Backend.Services
         public async Task<bool> SignupAsync(SignupDTO signupDTO)
         {
             if (signupDTO == null || string.IsNullOrEmpty(signupDTO.FullName) || string.IsNullOrWhiteSpace(signupDTO.Email)
-                || string.IsNullOrWhiteSpace(signupDTO.Password) || string.IsNullOrWhiteSpace(signupDTO.PhoneNumber))
+                || string.IsNullOrWhiteSpace(signupDTO.Password))
             {
                 throw new BadRequestException("Dữ liệu không hợp lệ.");
             }
