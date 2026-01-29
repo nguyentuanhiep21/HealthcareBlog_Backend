@@ -321,7 +321,7 @@ namespace HealthCareBlog_Backend.Controllers
 
         [HttpPut("{userId}/toggle-lock")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> ToggleUserLock(string userId, [FromBody] ToggleUserLockDTO? dto)
+        public async Task<ActionResult> ToggleUserLock(string userId, [FromBody] LockUserRequest? request)
         {
             try
             {
@@ -331,8 +331,43 @@ namespace HealthCareBlog_Backend.Controllers
                     return Unauthorized(new { message = "User not authenticated.", success = false });
                 }
 
-                var result = await _userService.ToggleUserLockAsync(adminId, userId, dto?.Reason);
-                return Ok(new { message = "User lock status updated successfully.", success = result });
+                // Validate unlock date if provided
+                if (request?.UnlockDate.HasValue == true && request.UnlockDate <= DateTime.UtcNow)
+                {
+                    return BadRequest(new { message = "Ngày mở khóa phải là ngày trong tương lai.", success = false });
+                }
+
+                var result = await _userService.LockUserAsync(adminId, userId, request?.Reason, request?.UnlockDate);
+                return Ok(new { message = "Tài khoản người dùng đã bị khóa.", success = result });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message, success = false });
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(new { message = ex.Message, success = false });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
+            }
+        }
+
+        [HttpPut("{userId}/unlock")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> UnlockUser(string userId)
+        {
+            try
+            {
+                var adminId = User.GetUserId();
+                if (string.IsNullOrEmpty(adminId))
+                {
+                    return Unauthorized(new { message = "User not authenticated.", success = false });
+                }
+
+                var result = await _userService.UnlockUserAsync(adminId, userId);
+                return Ok(new { message = "Mở khóa tài khoản thành công.", success = result });
             }
             catch (NotFoundException ex)
             {

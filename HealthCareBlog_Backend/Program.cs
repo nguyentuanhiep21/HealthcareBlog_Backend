@@ -118,6 +118,7 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ISavedPostService, SavedPostService>();
 builder.Services.AddScoped<IFollowService, FollowService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserLockService, UserLockService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IEmailService, EmailService>();

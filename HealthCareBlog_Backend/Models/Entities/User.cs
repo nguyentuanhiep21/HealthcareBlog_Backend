@@ -85,6 +85,9 @@ public class User : IdentityUser
     [Column("locked_at")]
     public DateTime? LockedAt { get; set; }
 
+    [Column("unlock_date")]
+    public DateTime? UnlockDate { get; set; }
+
     [Column("lock_reason")]
     [StringLength(500)]
     public string? LockReason { get; set; }

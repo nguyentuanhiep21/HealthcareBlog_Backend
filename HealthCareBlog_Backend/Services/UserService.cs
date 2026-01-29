@@ -19,17 +19,20 @@ namespace HealthCareBlog_Backend.Services
         private readonly UserManager<Models.Entities.User> _userManager;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
+        private readonly IUserLockService _userLockService;
 
         public UserService(
             ApplicationDbContext context, 
             UserManager<Models.Entities.User> userManager,
             IEmailService emailService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IUserLockService userLockService)
         {
             _context = context;
             _userManager = userManager;
             _emailService = emailService;
             _configuration = configuration;
+            _userLockService = userLockService;
         }
 
         public async Task<bool> SignupAsync(SignupDTO signupDTO)
@@ -89,10 +92,29 @@ namespace HealthCareBlog_Backend.Services
                 throw new UnauthorizedException("Email chưa được xác thực. Vui lòng xác thực email trước.");
             }
 
+            // ✅ FAST LOCK CHECK - Kiểm tra trạng thái khóa mà KHÔNG UPDATE (tránh chậm)
             if (user.IsLocked)
             {
-                var lockReason = string.IsNullOrEmpty(user.LockReason) ? "Tài khoản đã bị khóa." : user.LockReason;
-                throw new UnauthorizedException($"Tài khoản đã bị khóa. Lý do: {lockReason}");
+                var now = DateTime.UtcNow;
+
+                // Nếu khóa vĩnh viễn (UnlockDate = null) → Từ chối
+                if (!user.UnlockDate.HasValue)
+                {
+                    var lockReason = string.IsNullOrEmpty(user.LockReason) ? "Tài khoản đã bị khóa." : user.LockReason;
+                    throw new UnauthorizedException($"Tài khoản đã bị khóa. Lý do: {lockReason}");
+                }
+
+                // Nếu hạn khóa chưa hết → Từ chối
+                if (user.UnlockDate > now)
+                {
+                    var daysRemaining = (int)Math.Ceiling((user.UnlockDate.Value - now).TotalDays);
+                    throw new UnauthorizedException($"Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau {daysRemaining} ngày.");
+                }
+
+                // 🚀 Hạn khóa ĐÃ QUA → Cho phép đăng nhập
+                // Trigger update async (không await - tránh chậm)
+                _ = _userLockService.CheckAndUnlockExpiredLockAsync(user.Id);
+                // user.IsLocked vẫn = true ở memory, nhưng DB sẽ được update ở background
             }
 
             var result = await _userManager.CheckPasswordAsync(user, loginDTO.Password);
@@ -538,7 +560,10 @@ namespace HealthCareBlog_Backend.Services
             return users;
         }
 
-        public async Task<bool> ToggleUserLockAsync(string adminId, string userId, string? reason = null)
+        /// <summary>
+        /// Lock user account with optional unlock date
+        /// </summary>
+        public async Task<bool> LockUserAsync(string adminId, string userId, string? reason = null, DateTime? unlockDate = null)
         {
             var user = await _userManager.FindByIdAsync(userId);
             
@@ -554,9 +579,39 @@ namespace HealthCareBlog_Backend.Services
                 throw new BadRequestException("Không thể khóa tài khoản admin.");
             }
 
-            user.IsLocked = !user.IsLocked;
-            user.LockedAt = user.IsLocked ? DateTime.UtcNow : null;
-            user.LockReason = user.IsLocked ? reason : null;
+            // Lock user with optional unlock date
+            user.IsLocked = true;
+            user.LockedAt = DateTime.UtcNow;
+            user.LockReason = reason;
+            user.UnlockDate = unlockDate;  // null = permanent, hasValue = temporary
+
+            var result = await _userManager.UpdateAsync(user);
+            
+            if (!result.Succeeded)
+            {
+                throw new BadRequestException("Không thể cập nhật trạng thái người dùng.");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Unlock user account
+        /// </summary>
+        public async Task<bool> UnlockUserAsync(string adminId, string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            
+            if (user == null)
+            {
+                throw new NotFoundException("Không tìm thấy người dùng.");
+            }
+
+            // Unlock user
+            user.IsLocked = false;
+            user.LockedAt = null;
+            user.LockReason = null;
+            user.UnlockDate = null;
 
             var result = await _userManager.UpdateAsync(user);
             
@@ -693,5 +748,6 @@ namespace HealthCareBlog_Backend.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 }

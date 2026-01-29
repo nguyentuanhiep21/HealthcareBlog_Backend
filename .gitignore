@@ -3,6 +3,9 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Documentation folder (local-only documentation)
+/HealthCareBlog_Backend/docs/
+
 # dotenv files
 .env
 
