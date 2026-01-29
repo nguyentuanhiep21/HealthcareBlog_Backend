@@ -23,7 +23,5 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<bool> LockUserAsync(string adminId, string userId, string? reason = null, DateTime? unlockDate = null);
         Task<bool> UnlockUserAsync(string adminId, string userId);
         Task<AdminStatsDTO> GetAdminStatsAsync();
-        Task<UserRolesDTO> GetUserRolesAsync(string userId);
-        Task<UserRolesDTO> UpdateUserRolesAsync(string userId, List<string> roles);
     }
 }

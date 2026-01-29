@@ -59,17 +59,5 @@ namespace HealthCareBlog_Backend.Controllers
             return Ok(posts);
         }
 
-        [HttpGet("{postId}/is-saved")]
-        public async Task<ActionResult<bool>> IsPostSaved(int postId)
-        {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User not authenticated.");
-            }
-
-            var isSaved = await _savedPostService.IsPostSavedAsync(userId, postId);
-            return Ok(new { isSaved });
-        }
     }
 }

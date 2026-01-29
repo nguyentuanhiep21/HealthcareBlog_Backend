@@ -101,46 +101,6 @@ namespace HealthCareBlog_Backend.Services
             return true;
         }
 
-        public async Task<List<string>> GetFollowersAsync(string userId, int page = 1, int pageSize = 20)
-        {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 20;
-            if (pageSize > 100) pageSize = 100;
-
-            var followerIds = await _context.Follows
-                .Where(f => f.FollowingId == userId)
-                .OrderByDescending(f => f.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(f => f.FollowerId)
-                .ToListAsync();
-
-            return followerIds;
-        }
-
-        public async Task<List<string>> GetFollowingAsync(string userId, int page = 1, int pageSize = 20)
-        {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 20;
-            if (pageSize > 100) pageSize = 100;
-
-            var followingIds = await _context.Follows
-                .Where(f => f.FollowerId == userId)
-                .OrderByDescending(f => f.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(f => f.FollowingId)
-                .ToListAsync();
-
-            return followingIds;
-        }
-
-        public async Task<bool> IsFollowingAsync(string followerId, string followingId)
-        {
-            return await _context.Follows
-                .AnyAsync(f => f.FollowerId == followerId && f.FollowingId == followingId);
-        }
-
         public async Task<List<FollowUserDTO>> GetFollowingUsersAsync(string userId, string? currentUserId, int page = 1, int pageSize = 20)
         {
             if (page < 1) page = 1;
@@ -167,34 +127,6 @@ namespace HealthCareBlog_Backend.Services
                 .ToListAsync();
 
             return followingUsers;
-        }
-
-        public async Task<List<FollowUserDTO>> GetFollowersUsersAsync(string userId, string? currentUserId, int page = 1, int pageSize = 20)
-        {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 20;
-            if (pageSize > 100) pageSize = 100;
-
-            var followers = await _context.Follows
-                .Where(f => f.FollowingId == userId)
-                .Include(f => f.Follower)
-                .ThenInclude(u => u.Followers)
-                .OrderByDescending(f => f.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(f => new FollowUserDTO
-                {
-                    Id = f.Follower.Id!,
-                    FullName = f.Follower.FullName ?? "Unknown",
-                    AvatarUrl = f.Follower.AvatarUrl,
-                    Bio = f.Follower.Bio,
-                    FollowerCount = f.Follower.FollowerCount,
-                    FollowingCount = f.Follower.FollowingCount,
-                    IsFollowedByCurrentUser = currentUserId != null && f.Follower.Followers.Any(follower => follower.FollowerId == currentUserId)
-                })
-                .ToListAsync();
-
-            return followers;
         }
     }
 }

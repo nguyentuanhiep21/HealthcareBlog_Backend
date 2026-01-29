@@ -44,40 +44,7 @@ namespace HealthCareBlog_Backend.Controllers
             return Ok(new { message = "Unfollowed successfully.", success = result });
         }
 
-        [HttpGet("{userId}/followers")]
-        [AllowAnonymous]
-        public async Task<ActionResult<List<string>>> GetFollowers(
-            string userId, 
-            [FromQuery] int page = 1, 
-            [FromQuery] int pageSize = 20)
-        {
-            var followers = await _followService.GetFollowersAsync(userId, page, pageSize);
-            return Ok(followers);
-        }
 
-        [HttpGet("{userId}/following")]
-        [AllowAnonymous]
-        public async Task<ActionResult<List<string>>> GetFollowing(
-            string userId, 
-            [FromQuery] int page = 1, 
-            [FromQuery] int pageSize = 20)
-        {
-            var following = await _followService.GetFollowingAsync(userId, page, pageSize);
-            return Ok(following);
-        }
-
-        [HttpGet("{userId}/is-following")]
-        public async Task<ActionResult<bool>> IsFollowing(string userId)
-        {
-            var followerId = User.GetUserId();
-            if (string.IsNullOrEmpty(followerId))
-            {
-                return Unauthorized("User not authenticated.");
-            }
-
-            var isFollowing = await _followService.IsFollowingAsync(followerId, userId);
-            return Ok(new { isFollowing });
-        }
 
         [HttpGet("{userId}/following-users")]
         [AllowAnonymous]

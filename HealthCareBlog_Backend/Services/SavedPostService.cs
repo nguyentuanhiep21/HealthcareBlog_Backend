@@ -85,11 +85,5 @@ namespace HealthCareBlog_Backend.Services
             
             return postDTOs;
         }
-
-        public async Task<bool> IsPostSavedAsync(string userId, int postId)
-        {
-            return await _context.SavedPosts
-                .AnyAsync(sp => sp.UserId == userId && sp.PostId == postId);
-        }
     }
 }

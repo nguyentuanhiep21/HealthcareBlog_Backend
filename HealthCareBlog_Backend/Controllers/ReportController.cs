@@ -57,50 +57,7 @@ namespace HealthCareBlog_Backend.Controllers
             return Ok(reports);
         }
 
-        [HttpGet("{reportId}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ViewReportDTO>> GetReportById(int reportId)
-        {
-            var report = await _reportService.GetReportByIdAsync(reportId);
-            return Ok(report);
-        }
 
-        [HttpGet("my-reports")]
-        public async Task<ActionResult<List<ViewReportDTO>>> GetMyReports(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
-        {
-            var userId = User.GetUserId();
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User not authenticated.");
-            }
-
-            var reports = await _reportService.GetUserReportsAsync(userId, page, pageSize);
-            return Ok(reports);
-        }
-
-        [HttpPut("{reportId}/resolve")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ViewReportDTO>> ResolveReport(int reportId, [FromBody] ResolveReportDTO resolveReportDTO)
-        {
-            var adminId = User.GetUserId();
-            if (string.IsNullOrEmpty(adminId))
-            {
-                return Unauthorized("User not authenticated.");
-            }
-
-            var report = await _reportService.ResolveReportAsync(adminId, reportId, resolveReportDTO);
-            return Ok(new { message = "Report resolved successfully.", data = report });
-        }
-
-        [HttpDelete("{reportId}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> DeleteReport(int reportId)
-        {
-            var result = await _reportService.DeleteReportAsync(reportId);
-            return Ok(new { message = "Report deleted successfully.", success = result });
-        }
 
         [HttpPut("{reportId}/process-user")]
         [Authorize(Roles = "Admin")]
