@@ -3,7 +3,6 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
-# Documentation folder (local-only documentation)
 /docs/
 
 # dotenv files
