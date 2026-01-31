@@ -57,17 +57,5 @@ namespace HealthCareBlog_Backend.Controllers
             var followingUsers = await _followService.GetFollowingUsersAsync(userId, currentUserId, page, pageSize);
             return Ok(followingUsers);
         }
-
-        [HttpGet("{userId}/followers-users")]
-        [AllowAnonymous]
-        public async Task<ActionResult<List<FollowUserDTO>>> GetFollowersUsers(
-            string userId, 
-            [FromQuery] int page = 1, 
-            [FromQuery] int pageSize = 20)
-        {
-            var currentUserId = User.GetUserId();
-            var followers = await _followService.GetFollowersUsersAsync(userId, currentUserId, page, pageSize);
-            return Ok(followers);
-        }
     }
 }
