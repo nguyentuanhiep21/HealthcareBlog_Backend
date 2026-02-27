@@ -35,12 +35,6 @@
 - SQL Server
 - JWT Authentication
 
-## 📚 Documentation
-
-- [Frontend README](HealthcareBlog_Frontend/README.md)
-- [Backend README](HealthCareBlog_Backend/README_AUTHENTICATION.md)
-- [Authentication Guide](HealthcareBlog_Frontend/AUTHENTICATION_GUIDE.md)
-
 ## ⚙️ Configuration
 
 ### Frontend Environment Variables (.env.local)
@@ -58,3 +52,26 @@ Xem [appsettings.json](HealthCareBlog_Backend/HealthCareBlog_Backend/appsettings
 - CORS origins
 - Email configuration
 
+```appsettings
+{
+  "ConnectionStrings": {
+    "DefaultSQLConnection": ""
+  },
+  "JwtSettings": {
+    "SecretKey": "",
+    "Issuer": "HealthCareBlog",
+    "Audience": "HealthCareBlogUsers",
+    "ExpirationDays": 7
+  },
+  "EmailSettings": {
+    "SmtpHost": "smtp.gmail.com",
+    "SmtpPort": 587,
+    "SmtpUsername": "",
+    "SmtpPassword": "",
+    "FromEmail": "",
+    "FromName": "HealthCareBlog"
+  },
+  "AppSettings": {
+    "FrontendUrl": "http://localhost:3000"
+}
+```
