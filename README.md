@@ -9,7 +9,7 @@
 1. **Khởi động Backend**:
    ```powershell
    cd HealthCareBlog_Backend\HealthCareBlog_Backend
-   dotnet run --launch-profile https
+   dotnet run
    ```
    Backend chạy trên: `https://localhost:7223`
 
@@ -19,12 +19,6 @@
    pnpm dev
    ```
    Frontend chạy trên: `http://localhost:3000`
-
-### Sử dụng script tự động
-
-```powershell
-.\start-dev.bat
-```
 
 ## 🔧 Tech Stack
 
