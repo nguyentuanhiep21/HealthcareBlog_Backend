@@ -45,9 +45,6 @@ namespace HealthCareBlog_Backend.Services
                         if (post != null)
                         {
                             targetUser = post.User;
-                            contentPreview = post.Content.Length > 100 
-                                ? post.Content.Substring(0, 100) + "..." 
-                                : post.Content;
                         }
                     }
                     break;
