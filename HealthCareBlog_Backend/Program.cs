@@ -127,7 +127,35 @@ builder.Services.AddScoped<INutritionService, NutritionService>();
 
 // Configure Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultSQLConnection")));
+{
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnectionString"),
+        npgsqlOptions =>
+        {
+            // Enable automatic retry on transient failures (network timeouts, connection pool exhaustion)
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorCodesToAdd: null
+            );
+            
+            // Set command execution timeout
+            npgsqlOptions.CommandTimeout(30);
+            
+            // Only disable certificate validation in development. Use proper certs in production
+            if (!builder.Environment.IsProduction())
+            {
+                npgsqlOptions.RemoteCertificateValidationCallback((sender, certificate, chain, sslPolicyErrors) => true);
+            }
+        }
+    );
+    
+    // Enable query tracking for debugging (can be disabled in production for performance)
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+    }
+});
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -165,58 +193,6 @@ builder.WebHost.ConfigureKestrel(options =>
 
 
 var app = builder.Build();
-
-// Seed Admin Role and Default Admin User
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = services.GetRequiredService<UserManager<User>>();
-
-        // Create roles if they don't exist
-        string[] roles = { "Admin", "User" };
-        foreach (var roleName in roles)
-        {
-            if (!await roleManager.RoleExistsAsync(roleName))
-            {
-                await roleManager.CreateAsync(new IdentityRole(roleName));
-            }
-        }
-
-        // Create default admin user if doesn't exist
-        var adminEmail = "admin@healthcareblog.com";
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
-        if (adminUser == null)
-        {
-            adminUser = new User
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                FullName = "System Admin",
-                EmailConfirmed = true,
-                AvatarUrl = null // No avatar set initially, frontend uses placeholder.svg
-            };
-
-            var result = await userManager.CreateAsync(adminUser, "Admin@123456");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(adminUser, "Admin");
-            }
-        }
-        else if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
-        {
-            await userManager.AddToRoleAsync(adminUser, "Admin");
-        }
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
-    }
-}
 
 // Configure CORS - Must be before other middleware
 app.UseCors("AllowSpecific");

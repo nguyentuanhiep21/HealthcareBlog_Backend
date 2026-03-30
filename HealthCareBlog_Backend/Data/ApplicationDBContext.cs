@@ -40,6 +40,9 @@ namespace HealthCareBlog_Backend.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Set default schema for EF migrations
+            modelBuilder.HasDefaultSchema("public");
+
             // ========== USER CONFIGURATION ==========
             modelBuilder.Entity<User>()
                 .HasIndex(x => x.UserName)
@@ -258,16 +261,16 @@ namespace HealthCareBlog_Backend.Data
                 .Build();
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            var connectionString = configuration.GetConnectionString("DefaultSQLConnection");
+            var connectionString = configuration.GetConnectionString("DefaultConnectionString");
 
             if (string.IsNullOrEmpty(connectionString))
             {
                 throw new InvalidOperationException(
-                    "Connection string 'DefaultSQLConnection' not found. " +
+                    "Connection string 'DefaultConnectionString' not found. " +
                     "Please ensure it is properly configured in appsettings.json");
             }
 
-            optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder.UseNpgsql(connectionString);
             return new ApplicationDbContext(optionsBuilder.Options);
         }
     }
