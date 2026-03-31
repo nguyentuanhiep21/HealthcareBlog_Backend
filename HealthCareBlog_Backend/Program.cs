@@ -142,7 +142,8 @@ builder.Services.AddCors(options =>
             "http://localhost:3000",
             "https://localhost:3000",
             "http://10.0.2.2:5216",
-            "https://10.0.2.2:7223"
+            "https://10.0.2.2:7223",
+            "https://healthcare-blog-frontend-3qca.vercel.app"
             )
               .AllowAnyHeader()
               .AllowAnyMethod()
