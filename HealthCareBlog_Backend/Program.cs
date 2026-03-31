@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using HealthCareBlog_Backend.Data;
 using HealthCareBlog_Backend.Models.Entities;
@@ -127,7 +127,7 @@ builder.Services.AddScoped<INutritionService, NutritionService>();
 
 // Configure Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultSQLConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnectionString")));
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -151,16 +151,11 @@ builder.Services.AddCors(options =>
 });
 
 // Configure Kestrel to listen on all interfaces
+// Render injects PORT env variable; fallback to 5216 for local dev
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5216";
 builder.WebHost.ConfigureKestrel(options =>
 {
-    // HTTP
-    options.Listen(System.Net.IPAddress.Any, 5216);
-
-    // HTTPS
-    options.Listen(System.Net.IPAddress.Any, 7223, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
+    options.Listen(System.Net.IPAddress.Any, int.Parse(port));
 });
 
 

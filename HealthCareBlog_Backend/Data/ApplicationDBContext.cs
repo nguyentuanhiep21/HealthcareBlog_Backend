@@ -1,4 +1,4 @@
-﻿using HealthCareBlog_Backend.Models.Entities;
+using HealthCareBlog_Backend.Models.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -248,6 +248,9 @@ namespace HealthCareBlog_Backend.Data
     {
         public ApplicationDbContext CreateDbContext(string[] args)
         {
+            // Force IPv4 for Supabase Session Pooler (free tier)
+            AppContext.SetSwitch("System.Net.Sockets.Socket.OSSupportsIPv6", false);
+
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
             var configuration = new ConfigurationBuilder()
@@ -258,7 +261,7 @@ namespace HealthCareBlog_Backend.Data
                 .Build();
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            var connectionString = configuration.GetConnectionString("DefaultSQLConnection");
+            var connectionString = configuration.GetConnectionString("DefaultConnectionString");
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -267,7 +270,7 @@ namespace HealthCareBlog_Backend.Data
                     "Please ensure it is properly configured in appsettings.json");
             }
 
-            optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder.UseNpgsql(connectionString);
             return new ApplicationDbContext(optionsBuilder.Options);
         }
     }
