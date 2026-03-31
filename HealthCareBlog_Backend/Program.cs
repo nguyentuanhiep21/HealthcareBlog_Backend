@@ -150,14 +150,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure Kestrel to listen on all interfaces
 // Render injects PORT env variable; fallback to 5216 for local dev
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5216";
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.Listen(System.Net.IPAddress.Any, int.Parse(port));
 });
-
 
 var app = builder.Build();
 
