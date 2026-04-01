@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using HealthCareBlog_Backend.Services.Interfaces;
 
 namespace HealthCareBlog_Backend.Controllers
 {
@@ -7,11 +8,11 @@ namespace HealthCareBlog_Backend.Controllers
     [ApiController]
     public class UploadController : ControllerBase
     {
-        private readonly IWebHostEnvironment _environment;
+        private readonly ISupabaseStorageService _supabaseStorageService;
 
-        public UploadController(IWebHostEnvironment environment)
+        public UploadController(ISupabaseStorageService supabaseStorageService)
         {
-            _environment = environment;
+            _supabaseStorageService = supabaseStorageService;
         }
 
         [HttpPost("image")]
@@ -40,25 +41,10 @@ namespace HealthCareBlog_Backend.Controllers
                     return BadRequest(new { message = "Kích thước ảnh không được vượt quá 5MB.", success = false });
                 }
 
-                // Create uploads directory if not exists
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "posts");
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                // Generate unique filename
-                var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                // Save file
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                // Upload to Supabase Storage
+                var fileUrl = await _supabaseStorageService.UploadFileAsync(file, "Posts");
 
                 // Return URL
-                var fileUrl = $"/uploads/posts/{uniqueFileName}";
                 return Ok(new { url = fileUrl, success = true });
             }
             catch (Exception ex)
@@ -94,25 +80,10 @@ namespace HealthCareBlog_Backend.Controllers
                     return BadRequest(new { message = "Kích thước ảnh không được vượt quá 5MB.", success = false });
                 }
 
-                // Create uploads directory if not exists
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "avatars");
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                // Generate unique filename
-                var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                // Save file
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                // Upload to Supabase Storage
+                var fileUrl = await _supabaseStorageService.UploadFileAsync(file, "Avatars");
 
                 // Return URL
-                var fileUrl = $"/uploads/avatars/{uniqueFileName}";
                 return Ok(new { url = fileUrl, success = true });
             }
             catch (Exception ex)

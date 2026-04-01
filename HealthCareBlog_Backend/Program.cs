@@ -21,7 +21,7 @@ builder.Services.AddDataProtection();
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedEmail = true;
-    // Password requirements - chỉ cần 8 ký tự trở lên
+    // Password requirements
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
@@ -112,7 +112,7 @@ builder.Services.AddSession(options =>
     options.Cookie.Name = ".HealthCareBlog.Session";
 });
 
-// Register Services (thêm các services của bạn ở đây)
+// Register Services
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ISavedPostService, SavedPostService>();
@@ -124,6 +124,18 @@ builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INutritionService, NutritionService>();
+builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
+
+// Configure Supabase
+var supabaseUrl = builder.Configuration["Supabase:Url"];
+var supabaseKey = builder.Configuration["Supabase:Key"];
+var options = new Supabase.SupabaseOptions
+{
+    AutoRefreshToken = true,
+    AutoConnectRealtime = true
+};
+var supabaseClient = new Supabase.Client(supabaseUrl!, supabaseKey!, options);
+builder.Services.AddSingleton(supabaseClient);
 
 // Configure Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -232,7 +244,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseSession();
-//app.UseHttpsRedirection();  // Tắt để cho phép kết nối Http từ máy ảo
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
