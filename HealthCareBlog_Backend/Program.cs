@@ -127,14 +127,20 @@ builder.Services.AddScoped<INutritionService, NutritionService>();
 builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 
 // Configure Supabase
-var supabaseUrl = builder.Configuration["Supabase:Url"];
-var supabaseKey = builder.Configuration["Supabase:Key"];
+var supabaseUrl = builder.Configuration["Supabase:Url"] ?? Environment.GetEnvironmentVariable("Supabase__Url");
+var supabaseKey = builder.Configuration["Supabase:Key"] ?? Environment.GetEnvironmentVariable("Supabase__Key");
+
+if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey))
+{
+    throw new InvalidOperationException("Supabase URL or Key is missing. Please ensure 'Supabase__Url' and 'Supabase__Key' are set in Environment Variables (Render) or in appsettings.json.");
+}
+
 var options = new Supabase.SupabaseOptions
 {
     AutoRefreshToken = true,
     AutoConnectRealtime = true
 };
-var supabaseClient = new Supabase.Client(supabaseUrl!, supabaseKey!, options);
+var supabaseClient = new Supabase.Client(supabaseUrl, supabaseKey, options);
 builder.Services.AddSingleton(supabaseClient);
 
 // Configure Database
