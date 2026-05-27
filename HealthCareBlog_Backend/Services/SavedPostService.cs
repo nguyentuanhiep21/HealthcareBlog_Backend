@@ -1,89 +1,57 @@
-using HealthCareBlog_Backend.Data;
-using HealthCareBlog_Backend.Services.Interfaces;
+using HealthCareBlog_Backend.Application.Interfaces.Repositories;
 using HealthCareBlog_Backend.Exceptions;
-using HealthCareBlog_Backend.Models.Entities;
 using HealthCareBlog_Backend.Models.DTOs.Posts;
-using HealthCareBlog_Backend.Models.Mapper;
-using Microsoft.EntityFrameworkCore;
+using HealthCareBlog_Backend.Models.Entities;
+using HealthCareBlog_Backend.Services.Interfaces;
 
-namespace HealthCareBlog_Backend.Services
+namespace HealthCareBlog_Backend.Services;
+
+/// <summary>
+/// SavedPostService — business logic cho SavedPost module.
+/// Không còn phụ thuộc ApplicationDbContext — dùng ISavedPostRepository.
+/// </summary>
+public class SavedPostService : ISavedPostService
 {
-    public class SavedPostService : ISavedPostService
+    private readonly ISavedPostRepository _savedPostRepository;
+
+    public SavedPostService(ISavedPostRepository savedPostRepository)
     {
-        private readonly ApplicationDbContext _context;
+        _savedPostRepository = savedPostRepository;
+    }
 
-        public SavedPostService(ApplicationDbContext context)
+    public async Task<bool> SavePostAsync(string userId, int postId)
+    {
+        var post = await _savedPostRepository.GetPostByIdAsync(postId)
+            ?? throw new NotFoundException("Post not found.");
+
+        var existingSave = await _savedPostRepository.GetSavedPostAsync(userId, postId);
+        if (existingSave != null)
+            throw new BadRequestException("Post already saved.");
+
+        var savedPost = new SavedPost
         {
-            _context = context;
-        }
+            UserId = userId,
+            PostId = postId,
+            CreatedAt = DateTime.UtcNow
+        };
 
-        public async Task<bool> SavePostAsync(string userId, int postId)
-        {
-            var post = await _context.Posts.FindAsync(postId);
-            if (post == null)
-            {
-                throw new NotFoundException("Post not found.");
-            }
+        await _savedPostRepository.AddAsync(savedPost);
+        await _savedPostRepository.SaveChangesAsync();
+        return true;
+    }
 
-            var existingSave = await _context.SavedPosts
-                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId);
+    public async Task<bool> UnsavePostAsync(string userId, int postId)
+    {
+        var savedPost = await _savedPostRepository.GetSavedPostAsync(userId, postId)
+            ?? throw new NotFoundException("Saved post not found.");
 
-            if (existingSave != null)
-            {
-                throw new BadRequestException("Post already saved.");
-            }
+        _savedPostRepository.Remove(savedPost);
+        await _savedPostRepository.SaveChangesAsync();
+        return true;
+    }
 
-            var savedPost = new SavedPost
-            {
-                UserId = userId,
-                PostId = postId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.SavedPosts.Add(savedPost);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> UnsavePostAsync(string userId, int postId)
-        {
-            var savedPost = await _context.SavedPosts
-                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId);
-
-            if (savedPost == null)
-            {
-                throw new NotFoundException("Saved post not found.");
-            }
-
-            _context.SavedPosts.Remove(savedPost);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<List<ViewPostDTO>> GetSavedPostsAsync(string userId, int page = 1, int pageSize = 20)
-        {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 20;
-            if (pageSize > 100) pageSize = 100;
-
-            var savedPostsQuery = _context.SavedPosts
-                .Where(sp => sp.UserId == userId)
-                .Include(sp => sp.Post)
-                    .ThenInclude(p => p.User)
-                        .ThenInclude(u => u.Followers)
-                .Include(sp => sp.Post)
-                    .ThenInclude(p => p.Likes)
-                .Include(sp => sp.Post)
-                    .ThenInclude(p => p.SavedByUsers)
-                .OrderByDescending(sp => sp.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize);
-
-            var savedPosts = await savedPostsQuery.ToListAsync();
-            var posts = savedPosts.Select(sp => sp.Post).ToList();
-            var postDTOs = posts.Select(p => p.ToViewPostDTO(userId)).ToList();
-            
-            return postDTOs;
-        }
+    public async Task<List<ViewPostDTO>> GetSavedPostsAsync(string userId, int page = 1, int pageSize = 20)
+    {
+        return await _savedPostRepository.GetSavedPostsDTOAsync(userId, page, pageSize);
     }
 }

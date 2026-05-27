@@ -132,6 +132,13 @@ builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 // Register Repositories
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<IFollowRepository, FollowRepository>();
+builder.Services.AddScoped<ISavedPostRepository, SavedPostRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<ISearchRepository, SearchRepository>();
+builder.Services.AddScoped<INutritionRepository, NutritionRepository>();
 
 // Register Middleware
 builder.Services.AddTransient<GlobalExceptionHandlerMiddleware>();
