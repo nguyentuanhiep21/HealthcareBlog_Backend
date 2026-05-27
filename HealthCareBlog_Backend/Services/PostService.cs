@@ -1,338 +1,177 @@
-﻿using HealthCareBlog_Backend.Data;
-using HealthCareBlog_Backend.Models.DTOs.Posts;
-using HealthCareBlog_Backend.Services.Interfaces;
+using HealthCareBlog_Backend.Application.Interfaces.Repositories;
 using HealthCareBlog_Backend.Exceptions;
-using HealthCareBlog_Backend.Models.Mapper;
-using HealthCareBlog_Backend.Models.Entities;
-using Microsoft.EntityFrameworkCore;
-using HealthCareBlog_Backend.Models.DTOs.Comments;
 using HealthCareBlog_Backend.Helpers;
+using HealthCareBlog_Backend.Models.DTOs.Comments;
+using HealthCareBlog_Backend.Models.DTOs.Posts;
+using HealthCareBlog_Backend.Models.Entities;
+using HealthCareBlog_Backend.Models.Mapper;
+using HealthCareBlog_Backend.Services.Interfaces;
 
-namespace HealthCareBlog_Backend.Services
+namespace HealthCareBlog_Backend.Services;
+
+/// <summary>
+/// PostService — business logic cho Posts.
+/// Phụ thuộc vào IPostRepository (không còn phụ thuộc trực tiếp ApplicationDbContext).
+/// </summary>
+public class PostService : IPostService
 {
-    public class PostService : IPostService
+    private readonly IPostRepository _postRepository;
+    private readonly INotificationService _notificationService;
+
+    public PostService(IPostRepository postRepository, INotificationService notificationService)
     {
-        public readonly ApplicationDbContext _context;
-        private readonly INotificationService _notificationService;
+        _postRepository = postRepository;
+        _notificationService = notificationService;
+    }
 
-        public PostService(ApplicationDbContext context, INotificationService notificationService)
+    public async Task<PostDetailDTO> GetPostByIdAsync(string? userId, int postId)
+    {
+        var post = await _postRepository.GetByIdWithDetailsAsync(postId)
+            ?? throw new NotFoundException("Post not found.");
+
+        var comments = post.Comments
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => c.ToViewCommentDTO(userId))
+            .ToList();
+
+        var postDTO = post.ToPostDetailDTO(userId);
+        postDTO.Comments = comments;
+
+        return postDTO;
+    }
+
+    public async Task<List<ViewPostDTO>> ViewPostAsync(string? userId, int page = 1, int pageSize = 10)
+    {
+        var posts = await _postRepository.GetPagedAsync(page, pageSize);
+        return posts.Select(p => p.ToViewPostDTO(userId)).ToList();
+    }
+
+    public async Task<List<ViewPostDTO>> GetTrendingPostsAsync(string? userId)
+    {
+        var posts = await _postRepository.GetTrendingTodayAsync();
+        return posts.Select(p => p.ToViewPostDTO(userId)).ToList();
+    }
+
+    public async Task<PostDetailDTO> CreatePostAsync(string authorId, CreatePostDTO createPostDTO)
+    {
+        if (createPostDTO == null)
+            throw new BadRequestException("Dữ liệu không hợp lệ.");
+
+        var user = await _postRepository.GetUserByIdAsync(authorId)
+            ?? throw new NotFoundException("Không tìm thấy người dùng.");
+
+        var newPost = new Post
         {
-            _context = context;
-            _notificationService = notificationService;
+            UserId = authorId,
+            Content = createPostDTO.Content,
+            ImageUrl = createPostDTO.ImageUrl ?? string.Empty,
+            CreatedAt = DateTimeHelper.GetVietnamTime(),
+            LikeCount = 0,
+            CommentCount = 0
+        };
+
+        await _postRepository.AddAsync(newPost);
+        user.PostCount++;
+        await _postRepository.SaveChangesAsync();
+
+        return newPost.ToPostDetailDTO(authorId);
+    }
+
+    public async Task<PostDetailDTO> UpdatePostAsync(string authorId, int postId, UpdatePostDTO updatePostDTO)
+    {
+        var post = await _postRepository.GetByIdWithDetailsAsync(postId)
+            ?? throw new NotFoundException("Post not found.");
+
+        if (post.UserId != authorId)
+            throw new UnauthorizedException("You are not authorized to update this post.");
+
+        // Xóa ảnh cũ nếu đổi ảnh mới
+        if (!string.IsNullOrEmpty(post.ImageUrl) && post.ImageUrl != updatePostDTO.ImageUrl)
+            FileHelper.DeletePostImage(post.ImageUrl);
+
+        post.Content = updatePostDTO.Content;
+        post.ImageUrl = updatePostDTO.ImageUrl;
+
+        await _postRepository.SaveChangesAsync();
+        return post.ToPostDetailDTO(authorId);
+    }
+
+    public async Task<bool> DeletePostAsync(int postId)
+    {
+        var post = await _postRepository.GetByIdAsync(postId)
+            ?? throw new NotFoundException("Post not found.");
+
+        // Xóa ảnh nếu có
+        if (!string.IsNullOrEmpty(post.ImageUrl))
+            FileHelper.DeletePostImage(post.ImageUrl);
+
+        // Xóa likes của post
+        await _postRepository.RemoveAllLikesByPostIdAsync(postId);
+
+        _postRepository.Remove(post);
+        await _postRepository.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> LikePostAsync(string userId, int postId)
+    {
+        var post = await _postRepository.GetByIdAsync(postId)
+            ?? throw new NotFoundException("Post not found.");
+
+        var existingLike = await _postRepository.GetLikeAsync(userId, postId);
+
+        if (existingLike != null)
+        {
+            // Đã like → unlike
+            _postRepository.RemoveLike(existingLike);
+            if (post.LikeCount > 0) post.LikeCount--;
+            await _postRepository.SaveChangesAsync();
+            return false;
         }
 
-        public async Task<PostDetailDTO> GetPostByIdAsync(string? UserId, int postId)
+        var newLike = new LikePost
         {
-            var post = await _context.Posts
-                .Include(p => p.User)
-                .Include(p => p.Likes)
-                .Include(p => p.SavedByUsers)
-                .Include(p => p.Comments)
-                    .ThenInclude(c => c.User)
-                .Include(p => p.Comments)
-                    .ThenInclude(c => c.Likes)
-                .FirstOrDefaultAsync(p => p.Id == postId);
+            UserId = userId,
+            PostId = postId,
+            CreatedAt = DateTime.UtcNow
+        };
 
-            if (post == null)
-            {
-                throw new NotFoundException("Post not found.");
-            }
+        await _postRepository.AddLikeAsync(newLike);
+        post.LikeCount++;
+        await _postRepository.SaveChangesAsync();
 
-            var comments = post.Comments
-                .OrderByDescending(c => c.CreatedAt)
-                .Select(c => c.ToViewCommentDTO(UserId))
-                .ToList();
+        await _notificationService.CreateNotificationAsync(
+            post.UserId, userId, NotificationType.Like, "đã thích bài viết của bạn", postId);
 
-            var postDTO = post.ToPostDetailDTO(UserId);
-            postDTO.Comments = comments;
+        return true;
+    }
 
-            return postDTO;
-        }
+    public async Task<bool> UnlikePostAsync(string userId, int postId)
+    {
+        var post = await _postRepository.GetByIdAsync(postId)
+            ?? throw new NotFoundException("Post not found.");
 
-        public async Task<List<ViewPostDTO>> ViewPostAsync(string? UserId, int page = 1, int pageSize = 10)
+        var existingLike = await _postRepository.GetLikeAsync(userId, postId);
+
+        if (existingLike == null)
         {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 10;
-            if (pageSize > 100) pageSize = 100;
-            
-            if(UserId != null)
-            {
-                var user = await _context.Users.FindAsync(UserId);
-            }
-            
-            var posts = await _context.Posts
-                .Include(p => p.User)
-                    .ThenInclude(u => u.Followers)
-                .Include(p => p.Likes)
-                .Include(p => p.SavedByUsers)
-                .OrderByDescending(p => p.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-                
-            var postDTOs = posts.Select(p => p.ToViewPostDTO(UserId)).ToList();
-            return postDTOs;
-        }
-
-        public async Task<List<ViewPostDTO>> GetTrendingPostsAsync(string? UserId)
-        {
-            var today = DateTime.UtcNow.Date;
-            var tomorrow = today.AddDays(1);
-
-            var trendingPosts = await _context.Posts
-                .Include(p => p.User)
-                    .ThenInclude(u => u.Followers)
-                .Include(p => p.Likes)
-                .Include(p => p.SavedByUsers)
-                .Where(p => p.CreatedAt >= today && p.CreatedAt < tomorrow)
-                .OrderByDescending(p => p.LikeCount + p.CommentCount)
-                .Take(3)
-                .ToListAsync();
-
-            var postDTOs = trendingPosts.Select(p => p.ToViewPostDTO(UserId)).ToList();
-            return postDTOs;
-        }
-
-        public async Task<PostDetailDTO> CreatePostAsync(string AuthorId, CreatePostDTO createPostDTO)
-        {
-            Console.WriteLine($"[CreatePostAsync] Starting - AuthorId: {AuthorId}");
-            
-            if (createPostDTO == null)
-            {
-                Console.WriteLine("[CreatePostAsync] Error: createPostDTO is null");
-                throw new BadRequestException("Dữ liệu không hợp lệ.");
-            }
-
-            Console.WriteLine($"[CreatePostAsync] Content length: {createPostDTO.Content?.Length ?? 0}");
-            Console.WriteLine($"[CreatePostAsync] ImageUrl length: {createPostDTO.ImageUrl?.Length ?? 0}");
-
-            var user = await _context.Users.FindAsync(AuthorId);
-            if (user == null)
-            {
-                Console.WriteLine($"[CreatePostAsync] Error: User not found - {AuthorId}");
-                throw new NotFoundException("Không tìm thấy người dùng.");
-            }
-
-            Console.WriteLine($"[CreatePostAsync] User found: {user.FullName}");
-
-            var newPost = new Post
-            {
-                UserId = AuthorId,
-                Content = createPostDTO.Content,
-                ImageUrl = createPostDTO.ImageUrl ?? string.Empty,
-                CreatedAt = DateTimeHelper.GetVietnamTime(),
-                LikeCount = 0,
-                CommentCount = 0
-            };
-            
-            Console.WriteLine("[CreatePostAsync] Adding post to context...");
-            _context.Posts.Add(newPost);
-            user.PostCount++;
-            
-            Console.WriteLine("[CreatePostAsync] Saving changes...");
-            await _context.SaveChangesAsync();
-            
-            Console.WriteLine($"[CreatePostAsync] Success - Post ID: {newPost.Id}");
-            return newPost.ToPostDetailDTO(AuthorId);
-        }
-
-        public async Task<PostDetailDTO> UpdatePostAsync(string AuthorId, int postId, UpdatePostDTO updatePostDTO)
-        {
-            var post = await _context.Posts
-                .Include(p => p.Likes)
-                .Include(p => p.SavedByUsers)
-                .FirstOrDefaultAsync(p => p.Id == postId);
-
-            if (post == null)
-            {
-                throw new NotFoundException("Post not found.");
-            }
-
-            if (post.UserId != AuthorId)
-            {
-                throw new UnauthorizedException("You are not authorized to update this post.");
-            }
-
-            // Delete old image if changing to new image or removing image
-            if (!string.IsNullOrEmpty(post.ImageUrl) && post.ImageUrl != updatePostDTO.ImageUrl)
-            {
-                FileHelper.DeletePostImage(post.ImageUrl);
-            }
-
-            post.Content = updatePostDTO.Content;
-            post.ImageUrl = updatePostDTO.ImageUrl;
-
-            await _context.SaveChangesAsync();
-            return post.ToPostDetailDTO(AuthorId);
-        }
-
-        public async Task<bool> DeletePostAsync(int postId)
-        {
-            var post = await _context.Posts.FindAsync(postId);
-
-            if (post == null)
-            {
-                throw new NotFoundException("Post not found.");
-            }
-
-            var user = await _context.Users.FindAsync(post.UserId);
-
-            // Delete image file if exists
-            if (!string.IsNullOrEmpty(post.ImageUrl))
-            {
-                FileHelper.DeletePostImage(post.ImageUrl);
-            }
-
-            var postLikes = await _context.LikePosts
-                .Where(l => l.PostId == postId)
-                .ToListAsync();
-            
-            if (postLikes.Any())
-            {
-                _context.LikePosts.RemoveRange(postLikes);
-            }
-
-            var savedPosts = await _context.SavedPosts
-                .Where(sp => sp.PostId == postId)
-                .ToListAsync();
-            
-            if (savedPosts.Any())
-            {
-                _context.SavedPosts.RemoveRange(savedPosts);
-            }
-
-            var postComments = await _context.Comments
-                .Where(c => c.PostId == postId)
-                .ToListAsync();
-            
-            if (postComments.Any())
-            {
-                var commentIds = postComments.Select(c => c.Id).ToList();
-                
-                var commentLikes = await _context.LikeComments
-                    .Where(l => commentIds.Contains(l.CommentId))
-                    .ToListAsync();
-                
-                if (commentLikes.Any())
-                {
-                    _context.LikeComments.RemoveRange(commentLikes);
-                }
-
-                var commentNotifications = await _context.Notifications
-                    .Where(n => n.CommentId != null && commentIds.Contains(n.CommentId.Value))
-                    .ToListAsync();
-                
-                if (commentNotifications.Any())
-                {
-                    _context.Notifications.RemoveRange(commentNotifications);
-                }
-
-                _context.Comments.RemoveRange(postComments);
-            }
-
-            var postNotifications = await _context.Notifications
-                .Where(n => n.PostId == postId)
-                .ToListAsync();
-            
-            if (postNotifications.Any())
-            {
-                _context.Notifications.RemoveRange(postNotifications);
-            }
-
-            _context.Posts.Remove(post);
-            
-            if (user != null && user.PostCount > 0)
-            {
-                user.PostCount--;
-            }
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> LikePostAsync(string UserId, int postId)
-        {
-            var post = await _context.Posts.FindAsync(postId);
-
-            if (post == null)
-            {
-                throw new NotFoundException("Post not found.");
-            }
-
-            var existingLike = await _context.LikePosts
-                .FirstOrDefaultAsync(l => l.UserId == UserId && l.PostId == postId);
-
-            if (existingLike != null)
-            {
-                // Đã like rồi, unlike luôn
-                _context.LikePosts.Remove(existingLike);
-                if (post.LikeCount > 0)
-                {
-                    post.LikeCount--;
-                }
-                await _context.SaveChangesAsync();
-                return false; // Return false để biết là đã unlike
-            }
-
+            // Chưa like → like luôn
             var newLike = new LikePost
             {
-                UserId = UserId,
+                UserId = userId,
                 PostId = postId,
                 CreatedAt = DateTime.UtcNow
             };
-
-            _context.LikePosts.Add(newLike);
+            await _postRepository.AddLikeAsync(newLike);
             post.LikeCount++;
-            await _context.SaveChangesAsync();
-
-            // Create notification for post owner
-            await _notificationService.CreateNotificationAsync(
-                post.UserId, 
-                UserId, 
-                NotificationType.Like, 
-                "đã thích bài viết của bạn",
-                postId
-            );
-
-            return true; // Return true để biết là đã like
+            await _postRepository.SaveChangesAsync();
+            return false;
         }
 
-        public async Task<bool> UnlikePostAsync(string UserId, int postId)
-        {
-            var post = await _context.Posts.FindAsync(postId);
-
-            if (post == null)
-            {
-                throw new NotFoundException("Post not found.");
-            }
-
-            var existingLike = await _context.LikePosts
-                .FirstOrDefaultAsync(l => l.UserId == UserId && l.PostId == postId);
-
-            if (existingLike == null)
-            {
-                // Chưa like, like luôn
-                var newLike = new LikePost
-                {
-                    UserId = UserId,
-                    PostId = postId,
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.LikePosts.Add(newLike);
-                post.LikeCount++;
-                await _context.SaveChangesAsync();
-                return false; // Return false để biết là đã like
-            }
-
-            _context.LikePosts.Remove(existingLike);
-
-            if (post.LikeCount > 0)
-            {
-                post.LikeCount--;
-            }
-
-            await _context.SaveChangesAsync();
-            return true; // Return true để biết là đã unlike
-        }
+        _postRepository.RemoveLike(existingLike);
+        if (post.LikeCount > 0) post.LikeCount--;
+        await _postRepository.SaveChangesAsync();
+        return true;
     }
 }

@@ -8,6 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using HealthCareBlog_Backend.Application.Interfaces.Repositories;
+using HealthCareBlog_Backend.Infrastructure.Persistence.Repositories;
+using HealthCareBlog_Backend.Presentation.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -126,6 +129,12 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INutritionService, NutritionService>();
 builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 
+// Register Repositories
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+
+// Register Middleware
+builder.Services.AddTransient<GlobalExceptionHandlerMiddleware>();
+
 // Configure Supabase
 var supabaseUrl = builder.Configuration["Supabase:Url"] ?? Environment.GetEnvironmentVariable("Supabase__Url");
 var supabaseKey = builder.Configuration["Supabase:Key"] ?? Environment.GetEnvironmentVariable("Supabase__Key");
@@ -232,6 +241,9 @@ using (var scope = app.Services.CreateScope())
 
 // Configure CORS - Must be before other middleware
 app.UseCors("AllowSpecific");
+
+// Global Exception Handler — phải đứng đầu pipeline để bắt mọi exception
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
