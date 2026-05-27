@@ -131,6 +131,7 @@ builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 
 // Register Repositories
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Register Middleware
 builder.Services.AddTransient<GlobalExceptionHandlerMiddleware>();

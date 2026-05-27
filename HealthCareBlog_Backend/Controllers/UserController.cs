@@ -2,466 +2,195 @@ using HealthCareBlog_Backend.Extensions;
 using HealthCareBlog_Backend.Models.DTOs.Users;
 using HealthCareBlog_Backend.Models.DTOs.Reports;
 using HealthCareBlog_Backend.Services.Interfaces;
-using HealthCareBlog_Backend.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace HealthCareBlog_Backend.Controllers
+namespace HealthCareBlog_Backend.Controllers;
+
+/// <summary>
+/// UserController — chỉ xử lý HTTP request/response.
+/// GlobalExceptionHandlerMiddleware bắt toàn bộ lỗi, không cần try/catch ở đây.
+/// </summary>
+[Route("api/[controller]")]
+[ApiController]
+public class UserController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UserController : ControllerBase
+    private readonly IUserService _userService;
+    private readonly IReportService _reportService;
+
+    public UserController(IUserService userService, IReportService reportService)
     {
-        private readonly IUserService _userService;
-        private readonly IReportService _reportService;
+        _userService = userService;
+        _reportService = reportService;
+    }
 
-        public UserController(IUserService userService, IReportService reportService)
+    [HttpPost("signup")]
+    public async Task<ActionResult> Signup([FromBody] SignupDTO dto)
+    {
+        var result = await _userService.SignupAsync(dto);
+        return Ok(new { message = "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.", success = result });
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult> Login([FromBody] LoginDTO dto)
+    {
+        var token = await _userService.LoginAsync(dto);
+        return Ok(new { message = "Đăng nhập thành công.", token });
+    }
+
+    [HttpGet("verify-email")]
+    public async Task<ActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string token)
+    {
+        await _userService.VerifyEmailAsync(userId, token);
+        return Ok(new { message = "Xác thực email thành công. Bạn có thể đăng nhập ngay!", success = true });
+    }
+
+    [HttpPost("resend-verification")]
+    public async Task<ActionResult> ResendVerificationEmail([FromBody] ForgotPasswordDTO model)
+    {
+        await _userService.ResendVerificationEmailAsync(model.Email);
+        return Ok(new { message = "Email xác thực đã được gửi lại.", success = true });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDTO dto)
+    {
+        await _userService.ForgotPasswordAsync(dto);
+        return Ok(new { message = "Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi.", success = true });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDTO dto)
+    {
+        await _userService.ResetPasswordAsync(dto);
+        return Ok(new { message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay!", success = true });
+    }
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
+    {
+        var userId = User.GetUserId()!;
+        await _userService.ChangePasswordAsync(userId, dto);
+        return Ok(new { message = "Đổi mật khẩu thành công!", success = true });
+    }
+
+    [HttpGet("profile/{userId}")]
+    public async Task<ActionResult<UserProfileDTO>> GetUserProfile(
+        string userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var currentUserId = User.GetUserId();
+        var profile = await _userService.GetUserProfileAsync(currentUserId, userId, page, pageSize);
+        return Ok(profile);
+    }
+
+    [HttpGet("suggested")]
+    public async Task<ActionResult<List<SuggestedUserDTO>>> GetSuggestedUsers()
+    {
+        var currentUserId = User.GetUserId();
+        var users = await _userService.GetSuggestedUsersAsync(currentUserId);
+        return Ok(users);
+    }
+
+    [HttpGet("account")]
+    [Authorize]
+    public async Task<ActionResult<ViewAccountDTO>> GetAccountInfo()
+    {
+        var userId = User.GetUserId()!;
+        var account = await _userService.GetAccountInfoAsync(userId);
+        return Ok(account);
+    }
+
+    [HttpPut("account")]
+    [Authorize]
+    public async Task<ActionResult<ViewAccountDTO>> UpdateAccountInfo([FromBody] UpdateAccountDTO dto)
+    {
+        var userId = User.GetUserId()!;
+        var account = await _userService.UpdateAccountInfoAsync(userId, dto);
+        return Ok(new { message = "Cập nhật thông tin thành công.", data = account });
+    }
+
+    [HttpDelete]
+    [Authorize]
+    public async Task<ActionResult> DeleteAccount()
+    {
+        var userId = User.GetUserId()!;
+        await _userService.DeleteUserAsync(userId);
+        return Ok(new { message = "Xóa tài khoản thành công.", success = true });
+    }
+
+    [HttpDelete("{userId}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> DeleteUser(string userId)
+    {
+        await _userService.DeleteUserAsync(userId);
+        return Ok(new { message = "Xóa người dùng thành công.", success = true });
+    }
+
+    [HttpGet("admin/all")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<List<AdminUserDTO>>> GetAllUsers(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? searchQuery = null)
+    {
+        var users = await _userService.GetAllUsersAsync(page, pageSize, searchQuery);
+        return Ok(users);
+    }
+
+    [HttpPut("{userId}/toggle-lock")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> ToggleUserLock(string userId, [FromBody] LockUserRequest? request)
+    {
+        var adminId = User.GetUserId()!;
+
+        if (request?.UnlockDate.HasValue == true && request.UnlockDate <= DateTime.UtcNow)
+            return BadRequest(new { message = "Ngày mở khóa phải là ngày trong tương lai.", success = false });
+
+        await _userService.LockUserAsync(adminId, userId, request?.Reason, request?.UnlockDate);
+        return Ok(new { message = "Tài khoản người dùng đã bị khóa.", success = true });
+    }
+
+    [HttpPut("{userId}/unlock")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> UnlockUser(string userId)
+    {
+        var adminId = User.GetUserId()!;
+        await _userService.UnlockUserAsync(adminId, userId);
+        return Ok(new { message = "Mở khóa tài khoản thành công.", success = true });
+    }
+
+    [HttpGet("admin/stats")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<AdminStatsDTO>> GetAdminStats()
+    {
+        var stats = await _userService.GetAdminStatsAsync();
+        return Ok(stats);
+    }
+
+    [HttpPut("avatar")]
+    [Authorize]
+    public async Task<ActionResult<ViewAccountDTO>> UpdateAvatar([FromBody] UpdateAvatarDTO dto)
+    {
+        var userId = User.GetUserId()!;
+        var account = await _userService.UpdateAvatarAsync(userId, dto.AvatarUrl);
+        return Ok(account);
+    }
+
+    [HttpPost("{userId}/report")]
+    [Authorize]
+    public async Task<ActionResult<ViewReportDTO>> ReportUser(string userId, [FromBody] CreateUserReportDTO dto)
+    {
+        var reporterId = User.GetUserId()!;
+        var createReportDTO = new CreateReportDTO
         {
-            _userService = userService;
-            _reportService = reportService;
-        }
+            ContentType = "User",
+            ContentId = userId,
+            Reason = dto.Reason,
+            Description = dto.Description
+        };
 
-        [HttpPost("signup")]
-        public async Task<ActionResult> Signup([FromBody] SignupDTO signupDTO)
-        {
-            try
-            {
-                var result = await _userService.SignupAsync(signupDTO);
-                return Ok(new { message = "User registered successfully. Please check your email to verify your account.", success = result });
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau.", success = false });
-            }
-        }
+        var (report, isExisting) = await _reportService.CreateReportAsync(reporterId, createReportDTO);
+        var message = isExisting ? "Bạn đã báo cáo người dùng này trước đó rồi." : "Báo cáo người dùng thành công.";
 
-        [HttpPost("login")]
-        public async Task<ActionResult> Login([FromBody] LoginDTO loginDTO)
-        {
-            try
-            {
-                var token = await _userService.LoginAsync(loginDTO);
-                return Ok(new { message = "Login successful.", token });
-            }
-            catch (UnauthorizedException ex)
-            {
-                return Unauthorized(new { message = ex.Message, success = false });
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpGet("verify-email")]
-        public async Task<ActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string token)
-        {
-            try
-            {
-                var result = await _userService.VerifyEmailAsync(userId, token);
-                return Ok(new { message = "Email verified successfully. You can now login.", success = result });
-            }
-            catch (BadRequestException ex)
-            {
-                if (ex.Message.Contains("already verified"))
-                {
-                    return Ok(new { message = "Email đã được xác thực trước đó. Bạn có thể đăng nhập ngay!", success = true });
-                }
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi không mong muốn.", success = false });
-            }
-        }
-
-        [HttpPost("resend-verification")]
-        public async Task<ActionResult> ResendVerificationEmail([FromBody] ForgotPasswordDTO model)
-        {
-            try
-            {
-                var result = await _userService.ResendVerificationEmailAsync(model.Email);
-                return Ok(new { message = "Verification email sent successfully.", success = result });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi gửi email. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpPost("forgot-password")]
-        public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDTO forgotPasswordDTO)
-        {
-            try
-            {
-                var result = await _userService.ForgotPasswordAsync(forgotPasswordDTO);
-                return Ok(new { message = "If the email exists, a password reset link has been sent.", success = result });
-            }
-            catch (Exception)
-            {
-                return Ok(new { message = "If the email exists, a password reset link has been sent.", success = true });
-            }
-        }
-
-        [HttpPost("reset-password")]
-        public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDTO resetPasswordDTO)
-        {
-            try
-            {
-                var result = await _userService.ResetPasswordAsync(resetPasswordDTO);
-                return Ok(new { message = "Password reset successfully. You can now login with your new password.", success = result });
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpPost("change-password")]
-        [Authorize]
-        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDTO)
-        {
-            try
-            {
-                var userId = User.GetUserId();
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized(new { message = "User not authenticated.", success = false });
-                }
-
-                var result = await _userService.ChangePasswordAsync(userId, changePasswordDTO);
-                return Ok(new { message = "Đổi mật khẩu thành công!", success = result });
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpGet("profile/{userId}")]
-        public async Task<ActionResult<UserProfileDTO>> GetUserProfile(
-            string userId,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10)
-        {
-            try
-            {
-                var currentUserId = User.GetUserId();
-                var profile = await _userService.GetUserProfileAsync(currentUserId, userId, page, pageSize);
-                return Ok(profile);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpGet("suggested")]
-        public async Task<ActionResult<List<SuggestedUserDTO>>> GetSuggestedUsers()
-        {
-            try
-            {
-                var currentUserId = User.GetUserId();
-                var suggestedUsers = await _userService.GetSuggestedUsersAsync(currentUserId);
-                return Ok(suggestedUsers);
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpGet("account")]
-        [Authorize]
-        public async Task<ActionResult<ViewAccountDTO>> GetAccountInfo()
-        {
-            try
-            {
-                var userId = User.GetUserId();
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized(new { message = "User not authenticated.", success = false });
-                }
-
-                var account = await _userService.GetAccountInfoAsync(userId);
-                return Ok(account);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpPut("account")]
-        [Authorize]
-        public async Task<ActionResult<ViewAccountDTO>> UpdateAccountInfo([FromBody] UpdateAccountDTO updateAccountDTO)
-        {
-            try
-            {
-                var userId = User.GetUserId();
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized(new { message = "User not authenticated.", success = false });
-                }
-
-                var account = await _userService.UpdateAccountInfoAsync(userId, updateAccountDTO);
-                return Ok(new { message = "Account updated successfully.", data = account });
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpDelete]
-        [Authorize]
-        public async Task<ActionResult> DeleteAccount()
-        {
-            try
-            {
-                var userId = User.GetUserId();
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized(new { message = "User not authenticated.", success = false });
-                }
-
-                var result = await _userService.DeleteUserAsync(userId);
-                return Ok(new { message = "Account deleted successfully.", success = result });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpDelete("{userId}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> DeleteUser(string userId)
-        {
-            try
-            {
-                var result = await _userService.DeleteUserAsync(userId);
-                return Ok(new { message = "User deleted successfully.", success = result });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpGet("admin/all")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<List<AdminUserDTO>>> GetAllUsers(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20,
-            [FromQuery] string? searchQuery = null)
-        {
-            try
-            {
-                var users = await _userService.GetAllUsersAsync(page, pageSize, searchQuery);
-                return Ok(users);
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpPut("{userId}/toggle-lock")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> ToggleUserLock(string userId, [FromBody] LockUserRequest? request)
-        {
-            try
-            {
-                var adminId = User.GetUserId();
-                if (string.IsNullOrEmpty(adminId))
-                {
-                    return Unauthorized(new { message = "User not authenticated.", success = false });
-                }
-
-                // Validate unlock date if provided
-                if (request?.UnlockDate.HasValue == true && request.UnlockDate <= DateTime.UtcNow)
-                {
-                    return BadRequest(new { message = "Ngày mở khóa phải là ngày trong tương lai.", success = false });
-                }
-
-                var result = await _userService.LockUserAsync(adminId, userId, request?.Reason, request?.UnlockDate);
-                return Ok(new { message = "Tài khoản người dùng đã bị khóa.", success = result });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpPut("{userId}/unlock")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> UnlockUser(string userId)
-        {
-            try
-            {
-                var adminId = User.GetUserId();
-                if (string.IsNullOrEmpty(adminId))
-                {
-                    return Unauthorized(new { message = "User not authenticated.", success = false });
-                }
-
-                var result = await _userService.UnlockUserAsync(adminId, userId);
-                return Ok(new { message = "Mở khóa tài khoản thành công.", success = result });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpGet("admin/stats")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<AdminStatsDTO>> GetAdminStats()
-        {
-            try
-            {
-                var stats = await _userService.GetAdminStatsAsync();
-                return Ok(stats);
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-
-        [HttpPut("avatar")]
-        [Authorize]
-        public async Task<ActionResult<ViewAccountDTO>> UpdateAvatar([FromBody] UpdateAvatarDTO updateAvatarDTO)
-        {
-            try
-            {
-                var userId = User.GetUserId();
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized(new { message = "User not authenticated.", success = false });
-                }
-
-                var updatedAccount = await _userService.UpdateAvatarAsync(userId, updateAvatarDTO.AvatarUrl);
-                return Ok(updatedAccount);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
-        [HttpPost("{userId}/report")]
-        [Authorize]
-        public async Task<ActionResult<ViewReportDTO>> ReportUser(string userId, [FromBody] CreateUserReportDTO createUserReportDTO)
-        {
-            try
-            {
-                var reporterId = User.GetUserId();
-                if (string.IsNullOrEmpty(reporterId))
-                {
-                    return Unauthorized(new { message = "Bạn chưa đăng nhập.", success = false });
-                }
-
-                var createReportDTO = new CreateReportDTO
-                {
-                    ContentType = "User",
-                    ContentId = userId,
-                    Reason = createUserReportDTO.Reason,
-                    Description = createUserReportDTO.Description
-                };
-
-                var (report, isExisting) = await _reportService.CreateReportAsync(reporterId, createReportDTO);
-                
-                var message = isExisting 
-                    ? "Bạn đã báo cáo người dùng này trước đó rồi." 
-                    : "Báo cáo người dùng thành công.";
-                
-                return Ok(new { message, success = true, data = report });
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(new { message = ex.Message, success = false });
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message, success = false });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi. Vui lòng thử lại sau.", success = false });
-            }
-        }
+        return Ok(new { message, success = true, data = report });
     }
 }
