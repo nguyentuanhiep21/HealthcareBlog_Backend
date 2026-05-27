@@ -38,7 +38,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 FollowerCount = user.Followers?.Count ?? 0,
                 FollowingCount = user.FollowingCount,
                 PostCount = user.PostCount,
-                IsFollowedByCurrentUser = currentUserId != null && user.Followers.Any(f => f.FollowerId == currentUserId)
+                IsFollowedByCurrentUser = currentUserId != null && (user.Followers?.Any(f => f.FollowerId == currentUserId) ?? false)
             };
         }
     }

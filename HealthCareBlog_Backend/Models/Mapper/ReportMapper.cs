@@ -31,7 +31,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 CreatedAt = report.CreatedAt,
                 ResolvedAt = report.ResolvedAt,
                 AdminNote = report.AdminNote,
-                ReporterId = report.ReporterId,
+                ReporterId = report.ReporterId ?? string.Empty,
                 ResolvedById = report.ResolvedById,
                 
                 // Reporter info - use snapshot if deleted
