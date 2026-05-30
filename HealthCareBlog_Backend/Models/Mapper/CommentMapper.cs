@@ -1,4 +1,4 @@
-using HealthCareBlog_Backend.Models.DTOs.Comments;
+﻿using HealthCareBlog_Backend.Models.DTOs.Comments;
 using HealthCareBlog_Backend.Models.Entities;
 
 namespace HealthCareBlog_Backend.Models.Mapper
@@ -18,7 +18,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 {
                     Id = comment.User?.Id ?? "",
                     FullName = comment.User?.FullName ?? "Unknown",
-                    AvatarUrl = comment.User?.AvatarUrl ?? string.Empty,
+                    AvatarUrl = comment.User?.AvatarUrl,
                 }
             };
         }
@@ -38,7 +38,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 {
                     Id = comment.User?.Id ?? "",
                     FullName = comment.User?.FullName ?? "Unknown",
-                    AvatarUrl = comment.User?.AvatarUrl ?? string.Empty,
+                    AvatarUrl = comment.User?.AvatarUrl,
                 }
             };
         }
