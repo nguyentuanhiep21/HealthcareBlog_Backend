@@ -63,7 +63,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("comments");
+                    b.ToTable("comments", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Follow", b =>
@@ -98,7 +98,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("FollowerId", "FollowingId")
                         .IsUnique();
 
-                    b.ToTable("follows");
+                    b.ToTable("follows", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.LikeComment", b =>
@@ -135,7 +135,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("UserId", "CommentId")
                         .IsUnique();
 
-                    b.ToTable("like_comments");
+                    b.ToTable("like_comments", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.LikePost", b =>
@@ -172,7 +172,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("UserId", "PostId")
                         .IsUnique();
 
-                    b.ToTable("like_posts");
+                    b.ToTable("like_posts", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Notification", b =>
@@ -235,7 +235,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId", "IsRead");
 
-                    b.ToTable("notifications");
+                    b.ToTable("notifications", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.NutritionChatMessage", b =>
@@ -270,7 +270,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("SessionId");
 
-                    b.ToTable("nutrition_chat_message");
+                    b.ToTable("nutrition_chat_message", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.NutritionChatSession", b =>
@@ -297,7 +297,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("NutritionProfileId")
                         .IsUnique();
 
-                    b.ToTable("nutrition_chat_session");
+                    b.ToTable("nutrition_chat_session", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.NutritionProfile", b =>
@@ -345,7 +345,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("nutrition_profile");
+                    b.ToTable("nutrition_profile", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.Post", b =>
@@ -395,7 +395,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("posts");
+                    b.ToTable("posts", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.ReportedContent", b =>
@@ -489,7 +489,7 @@ namespace HealthCareBlog_Backend.Migrations
 
                     b.HasIndex("ContentType", "ContentId");
 
-                    b.ToTable("reported_contents");
+                    b.ToTable("reported_contents", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.SavedPost", b =>
@@ -526,7 +526,7 @@ namespace HealthCareBlog_Backend.Migrations
                     b.HasIndex("UserId", "PostId")
                         .IsUnique();
 
-                    b.ToTable("saved_posts");
+                    b.ToTable("saved_posts", (string)null);
                 });
 
             modelBuilder.Entity("HealthCareBlog_Backend.Models.Entities.User", b =>

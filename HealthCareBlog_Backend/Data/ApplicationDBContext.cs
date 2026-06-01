@@ -40,6 +40,9 @@ namespace HealthCareBlog_Backend.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Set default schema for EF migrations
+            modelBuilder.HasDefaultSchema("public");
+
             // ========== USER CONFIGURATION ==========
             modelBuilder.Entity<User>()
                 .HasIndex(x => x.UserName)
@@ -266,7 +269,7 @@ namespace HealthCareBlog_Backend.Data
             if (string.IsNullOrEmpty(connectionString))
             {
                 throw new InvalidOperationException(
-                    "Connection string 'DefaultSQLConnection' not found. " +
+                    "Connection string 'DefaultConnectionString' not found. " +
                     "Please ensure it is properly configured in appsettings.json");
             }
 
