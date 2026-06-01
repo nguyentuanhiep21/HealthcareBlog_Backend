@@ -21,10 +21,6 @@ namespace HealthCareBlog_Backend.Services
         {
             ["Male"]  = "Male",
             ["Female"]= "Female",
-            ["Nam"]   = "Male",
-            ["Nữ"]    = "Female",
-            ["Nu"]    = "Female",
-            // "Khác" / other → Male (neutral fallback, same as model training)
         };
 
         private static readonly Dictionary<string, string> _goalMap = new(StringComparer.OrdinalIgnoreCase)
@@ -32,12 +28,6 @@ namespace HealthCareBlog_Backend.Services
             ["Gain_Muscle"] = "Gain_Muscle",
             ["Lose_Fat"]    = "Lose_Fat",
             ["Maintain"]    = "Maintain",
-            ["Tăng cân"]    = "Gain_Muscle",
-            ["Tang can"]    = "Gain_Muscle",
-            ["Giảm cân"]    = "Lose_Fat",
-            ["Giam can"]    = "Lose_Fat",
-            ["Duy trì"]     = "Maintain",
-            ["Duy tri"]     = "Maintain",
         };
 
         // BMI table: (low, high, label)
@@ -71,9 +61,9 @@ namespace HealthCareBlog_Backend.Services
             },
             ["Maintain"] = new()
             {
-                ["Gầy (Thiếu cân)"] = "Duy trì không phù hợp khi đang thiếu cân. Hãy cân nhắc mục tiêu Gain_Muscle.",
+                ["Gầy (Thiếu cân)"] = "Duy trì không phù hợp khi đang thiếu cân. Hãy cân nhắc mục tiêu tăng cơ.",
                 ["Bình thường"]     = "Tuyệt vời! Duy trì thói quen ăn uống và luyện tập hiện tại.",
-                ["Thừa cân"]        = "Bạn nên cân nhắc mục tiêu Lose_Fat thay vì chỉ duy trì.",
+                ["Thừa cân"]        = "Bạn nên cân nhắc mục tiêu giảm mỡ thay vì chỉ duy trì.",
                 ["Béo phì độ I"]    = "Duy trì không phù hợp. Cần giảm cân vì lý do sức khỏe.",
                 ["Béo phì độ II+"]  = "Nên tham khảo bác sĩ về kế hoạch sức khỏe phù hợp.",
             },
@@ -83,12 +73,11 @@ namespace HealthCareBlog_Backend.Services
 
         public (HealthAssessResultDto? result, string? error) Assess(HealthAssessRequestDto req)
         {
-            // 1. Validate & normalize
             if (!_genderMap.TryGetValue(req.Gender?.Trim() ?? "", out var gender))
-                return (null, $"gender không hợp lệ: '{req.Gender}'. Hợp lệ: Nam, Nữ, Male, Female.");
+                return (null, $"gender không hợp lệ: '{req.Gender}'. Hợp lệ: Male, Female.");
 
             if (!_goalMap.TryGetValue(req.Goal?.Trim() ?? "", out var goal))
-                return (null, $"goal không hợp lệ: '{req.Goal}'. Hợp lệ: Tăng cân, Giảm cân, Duy trì.");
+                return (null, $"goal không hợp lệ: '{req.Goal}'. Hợp lệ: Gain_Muscle, Lose_Fat, Maintain.");
 
             if (req.Age is < 10 or > 100)
                 return (null, $"age phải trong khoảng 10–100, nhận được: {req.Age}.");

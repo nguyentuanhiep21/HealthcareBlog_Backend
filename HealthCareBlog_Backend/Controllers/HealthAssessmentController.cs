@@ -24,18 +24,18 @@ public class HealthAssessmentController : ControllerBase
     /// Đánh giá sức khỏe và tính toán mục tiêu dinh dưỡng cá nhân.
     /// </summary>
     /// <remarks>
-    /// **gender:** "Nam" | "Nữ" | "Male" | "Female"
+    /// **gender:** "Male" | "Female"
     ///
-    /// **goal:** "Tăng cân" | "Giảm cân" | "Duy trì" | "Gain_Muscle" | "Lose_Fat" | "Maintain"
+    /// **goal:** "Gain_Muscle" | "Lose_Fat" | "Maintain"
     ///
     /// **Ví dụ request:**
     /// ```json
     /// {
-    ///   "gender": "Nam",
+    ///   "gender": "Male",
     ///   "age": 25,
     ///   "height": 175,
     ///   "weight": 70,
-    ///   "goal": "Tăng cân"
+    ///   "goal": "Gain_Muscle"
     /// }
     /// ```
     /// </remarks>

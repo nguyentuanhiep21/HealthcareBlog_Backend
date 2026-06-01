@@ -3,7 +3,7 @@ namespace HealthCareBlog_Backend.Models.DTOs
     // ── Request ──────────────────────────────────────────────────────────────
     public class HealthAssessRequestDto
     {
-        /// <summary>Giới tính: "Nam" | "Nữ" | "Male" | "Female"</summary>
+        /// <summary>Giới tính: "Male" | "Female"</summary>
         public string Gender { get; set; } = string.Empty;
 
         /// <summary>Tuổi (10–100)</summary>
@@ -15,7 +15,7 @@ namespace HealthCareBlog_Backend.Models.DTOs
         /// <summary>Cân nặng (kg, 30–300)</summary>
         public float Weight { get; set; }
 
-        /// <summary>Mục tiêu: "Tăng cân" | "Giảm cân" | "Duy trì" | "Gain_Muscle" | "Lose_Fat" | "Maintain"</summary>
+        /// <summary>Mục tiêu: "Gain_Muscle" | "Lose_Fat" | "Maintain"</summary>
         public string Goal { get; set; } = string.Empty;
     }
 
