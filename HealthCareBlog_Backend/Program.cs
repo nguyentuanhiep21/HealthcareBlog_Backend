@@ -128,6 +128,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INutritionService, NutritionService>();
 builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
+builder.Services.AddSingleton<IHealthAssessmentService, HealthAssessmentService>();
 
 // Register Repositories
 builder.Services.AddScoped<IPostRepository, PostRepository>();

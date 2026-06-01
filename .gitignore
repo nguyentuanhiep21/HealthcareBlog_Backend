@@ -496,3 +496,4 @@ appsettings.*.json
 # Uploaded files
 wwwroot/uploads/
 HealthCareBlog_Backend/wwwroot/uploads/
+ARCHITECTURE.md
