@@ -35,7 +35,7 @@ public class MealSuggestionRepository : IMealSuggestionRepository
         return _context.Meals
             .Where(m =>
                 m.MealType == mealType &&
-                m.SuitableFor.Contains(goal) &&
+                m.SuitableFor.Any(s => s == goal) &&
                 m.CaloriesPerServing >= caloriesMin &&
                 m.CaloriesPerServing <= caloriesMax &&
                 m.IsActive &&
@@ -58,7 +58,7 @@ public class MealSuggestionRepository : IMealSuggestionRepository
         return _context.Meals
             .Where(m =>
                 m.MealType == mealType &&
-                m.SuitableFor.Contains(goal) &&
+                m.SuitableFor.Any(s => s == goal) &&
                 m.IsActive &&
                 !exclude.Contains(m.Id))
             .OrderBy(m => EF.Functions.Random())
