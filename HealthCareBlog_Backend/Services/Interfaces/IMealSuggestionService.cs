@@ -6,7 +6,7 @@ public interface IMealSuggestionService
 {
     /// <summary>
     /// Gợi ý thực đơn 1 ngày dựa trên nutrition targets từ HealthAssessment.
-    /// Trả về null nếu DB không đủ dữ liệu phù hợp.
+    /// Trả về DailyMealPlanDto hoặc ném ra exception nếu không hợp lệ.
     /// </summary>
-    Task<(DailyMealPlanDto? plan, string? error)> RecommendAsync(MealSuggestionRequestDto request);
+    Task<DailyMealPlanDto> RecommendAsync(MealSuggestionRequestDto request);
 }

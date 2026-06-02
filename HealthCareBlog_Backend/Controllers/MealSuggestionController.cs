@@ -39,18 +39,11 @@ public class MealSuggestionController : ControllerBase
     /// **goal:** "Lose_Fat" | "Gain_Muscle" | "Maintain"
     /// </remarks>
     [HttpPost("recommend")]
-    [ProducesResponseType(typeof(DailyMealPlanDto),        StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(MealSuggestionErrorDto),  StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> Recommend([FromBody] MealSuggestionRequestDto request)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(new MealSuggestionErrorDto { Message = "Request không hợp lệ." });
-
-        var (plan, error) = await _service.RecommendAsync(request);
-
-        if (error is not null)
-            return BadRequest(new MealSuggestionErrorDto { Message = error });
-
-        return Ok(plan);
+        var plan = await _service.RecommendAsync(request);
+        return Ok(new { message = "Gợi ý thực đơn thành công.", data = plan, success = true });
     }
 }

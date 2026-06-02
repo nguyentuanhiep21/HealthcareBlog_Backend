@@ -1,4 +1,5 @@
 using HealthCareBlog_Backend.Application.Interfaces.Repositories;
+using HealthCareBlog_Backend.Exceptions;
 using HealthCareBlog_Backend.Models.DTOs;
 using HealthCareBlog_Backend.Models.Entities;
 using HealthCareBlog_Backend.Services.Interfaces;
@@ -37,15 +38,15 @@ public class MealSuggestionService : IMealSuggestionService
         _repo = repo;
     }
 
-    public async Task<(DailyMealPlanDto? plan, string? error)> RecommendAsync(
+    public async Task<DailyMealPlanDto> RecommendAsync(
         MealSuggestionRequestDto request)
     {
         if (request.CaloriesKcal <= 0)
-            return (null, "Calories target phải lớn hơn 0.");
+            throw new BadRequestException("Calories target phải lớn hơn 0.");
 
         var validGoals = new[] { "Lose_Fat", "Gain_Muscle", "Maintain" };
         if (!validGoals.Contains(request.Goal))
-            return (null, $"Goal không hợp lệ: '{request.Goal}'. Hợp lệ: Lose_Fat, Gain_Muscle, Maintain.");
+            throw new BadRequestException($"Goal không hợp lệ: '{request.Goal}'. Hợp lệ: Lose_Fat, Gain_Muscle, Maintain.");
 
         int total = request.CaloriesKcal;
 
@@ -76,7 +77,7 @@ public class MealSuggestionService : IMealSuggestionService
                 dinner    is null ? "bữa tối"  : null,
             }.Where(x => x is not null));
 
-            return (null, $"Không tìm được món phù hợp cho: {missing}. Vui lòng kiểm tra dữ liệu bảng meals.");
+            throw new BadRequestException($"Không tìm được món phù hợp cho: {missing}. Vui lòng kiểm tra dữ liệu bảng meals.");
         }
 
         // ── Build snacks list ──────────────────────────────────────────────────
@@ -122,7 +123,7 @@ public class MealSuggestionService : IMealSuggestionService
             }
         };
 
-        return (plan, null);
+        return plan;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
