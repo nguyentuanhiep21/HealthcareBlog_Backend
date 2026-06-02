@@ -251,9 +251,9 @@ namespace HealthCareBlog_Backend.Data
             // ========== MEAL CONFIGURATION ==========
             modelBuilder.Entity<Meal>(entity =>
             {
-                // Map PostgreSQL text[] arrays (Npgsql)
-                entity.Property(e => e.SuitableFor).HasColumnType("text[]");
-                entity.Property(e => e.Tags).HasColumnType("text[]");
+                // Map PostgreSQL character varying[] arrays (Npgsql) to match DB schema
+                entity.Property(e => e.SuitableFor).HasColumnType("varchar[]");
+                entity.Property(e => e.Tags).HasColumnType("varchar[]");
 
                 // Indexes for recommendation queries
                 entity.HasIndex(e => e.MealType);

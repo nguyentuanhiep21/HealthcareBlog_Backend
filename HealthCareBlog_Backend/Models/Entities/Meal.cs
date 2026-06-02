@@ -46,14 +46,14 @@ public class Meal
     public string ServingSizeDesc { get; set; } = string.Empty;
 
     /// <summary>
-    /// PostgreSQL text[] — 'Lose_Fat' | 'Gain_Muscle' | 'Maintain'.
+    /// PostgreSQL varchar[] — 'Lose_Fat' | 'Gain_Muscle' | 'Maintain'.
     /// Query: WHERE @goal = ANY(suitable_for)
     /// </summary>
-    [Column("suitable_for")]
+    [Column("suitable_for", TypeName = "varchar[]")]
     public string[] SuitableFor { get; set; } = [];
 
-    /// <summary>PostgreSQL text[] — nhãn phân loại món ăn.</summary>
-    [Column("tags")]
+    /// <summary>PostgreSQL varchar[] — nhãn phân loại món ăn.</summary>
+    [Column("tags", TypeName = "varchar[]")]
     public string[] Tags { get; set; } = [];
 
     [Column("description")]
