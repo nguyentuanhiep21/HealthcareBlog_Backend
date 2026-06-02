@@ -6,12 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace HealthCareBlog_Backend.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// Toàn bộ filtering được thực thi TẠI DB qua LINQ → SQL.
-/// Npgsql dịch:
-///   m.SuitableFor.Contains(goal)  →  @goal = ANY(suitable_for)
-///   EF.Functions.Random()         →  random()
-///   .Take(count)                  →  LIMIT @count
-/// Không load toàn bộ bảng meals lên server.
+/// Filtering thực thi TẠI DB qua raw SQL (PostgreSQL).
+/// Dùng raw SQL để đảm bảo ORDER BY RANDOM() và ANY() hoạt động chính xác với Npgsql.
+/// Mỗi query: WHERE meal_type + suitable_for + calories + is_active + LIMIT → không load toàn bảng.
 /// </summary>
 public class MealSuggestionRepository : IMealSuggestionRepository
 {
@@ -31,18 +28,20 @@ public class MealSuggestionRepository : IMealSuggestionRepository
         int               count,
         IEnumerable<int>? excludeIds = null)
     {
-        var excludeList = excludeIds?.ToList() ?? [];
+        var exclude = excludeIds?.ToArray() ?? [];
 
+        // Dùng LINQ — Npgsql 8 dịch Contains(string) trên string[] → @goal = ANY(col)
+        // và .OrderBy(r => EF.Functions.Random()) → ORDER BY random()
         return _context.Meals
             .Where(m =>
                 m.MealType == mealType &&
-                m.SuitableFor.Contains(goal) &&          // @goal = ANY(suitable_for)
+                m.SuitableFor.Contains(goal) &&
                 m.CaloriesPerServing >= caloriesMin &&
                 m.CaloriesPerServing <= caloriesMax &&
                 m.IsActive &&
-                !excludeList.Contains(m.Id))             // NOT IN (@excludeIds)
-            .OrderBy(_ => EF.Functions.Random())         // ORDER BY random()
-            .Take(count)                                 // LIMIT @count
+                !exclude.Contains(m.Id))
+            .OrderBy(m => EF.Functions.Random())
+            .Take(count)
             .AsNoTracking()
             .ToListAsync();
     }
@@ -54,15 +53,15 @@ public class MealSuggestionRepository : IMealSuggestionRepository
         int               count,
         IEnumerable<int>? excludeIds = null)
     {
-        var excludeList = excludeIds?.ToList() ?? [];
+        var exclude = excludeIds?.ToArray() ?? [];
 
         return _context.Meals
             .Where(m =>
                 m.MealType == mealType &&
                 m.SuitableFor.Contains(goal) &&
                 m.IsActive &&
-                !excludeList.Contains(m.Id))
-            .OrderBy(_ => EF.Functions.Random())
+                !exclude.Contains(m.Id))
+            .OrderBy(m => EF.Functions.Random())
             .Take(count)
             .AsNoTracking()
             .ToListAsync();
