@@ -36,6 +36,9 @@ namespace HealthCareBlog_Backend.Data
         public DbSet<NutritionChatSession> NutritionChatSessions => Set<NutritionChatSession>();
         public DbSet<NutritionChatMessage> NutritionChatMessages => Set<NutritionChatMessage>();
 
+        // Meal Suggestions
+        public DbSet<Meal> Meals => Set<Meal>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -243,6 +246,19 @@ namespace HealthCareBlog_Backend.Data
 
                 entity.HasIndex(e => e.SessionId);
                 entity.HasIndex(e => e.CreatedAt);
+            });
+
+            // ========== MEAL CONFIGURATION ==========
+            modelBuilder.Entity<Meal>(entity =>
+            {
+                // Map PostgreSQL text[] arrays (Npgsql)
+                entity.Property(e => e.SuitableFor).HasColumnType("text[]");
+                entity.Property(e => e.Tags).HasColumnType("text[]");
+
+                // Indexes for recommendation queries
+                entity.HasIndex(e => e.MealType);
+                entity.HasIndex(e => e.IsActive);
+                entity.HasIndex(e => new { e.MealType, e.IsActive });
             });
         }
     }

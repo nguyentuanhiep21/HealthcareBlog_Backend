@@ -129,6 +129,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INutritionService, NutritionService>();
 builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 builder.Services.AddSingleton<IHealthAssessmentService, HealthAssessmentService>();
+builder.Services.AddScoped<IMealSuggestionService, MealSuggestionService>();
 
 // Register Repositories
 builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -140,6 +141,7 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<ISearchRepository, SearchRepository>();
 builder.Services.AddScoped<INutritionRepository, NutritionRepository>();
+builder.Services.AddScoped<IMealSuggestionRepository, MealSuggestionRepository>();
 
 // Register Middleware
 builder.Services.AddTransient<GlobalExceptionHandlerMiddleware>();
