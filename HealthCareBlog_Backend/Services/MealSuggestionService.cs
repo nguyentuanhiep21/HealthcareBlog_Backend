@@ -100,9 +100,9 @@ public class MealSuggestionService : IMealSuggestionService
         int coverage = total > 0 ? (int)Math.Round((double)totalCal / total * 100) : 0;
         string note  = coverage switch
         {
-            >= 95 and <= 105 => $"Đạt {coverage}% mục tiêu calo hôm nay ✓",
-            > 105            => $"Vượt {coverage - 100}% so với mục tiêu calo",
-            _                => $"Đạt {coverage}% mục tiêu calo hôm nay"
+            >= 95 and <= 105 => $"Đạt đủ mục tiêu calo cần thiết trong ngày ✓",
+            > 105            => $"Vượt {coverage - 100}% calo cần thiết trong ngày",
+            _                => $"Thiếu {100-coverage}% calo cần thiết trong ngày"
         };
 
         var plan = new DailyMealPlanDto
