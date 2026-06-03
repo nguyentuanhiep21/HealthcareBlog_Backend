@@ -200,18 +200,14 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecific", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:5216",
-            "https://localhost:5216",
-            "http://localhost:7223",
-            "https://localhost:7223",
-            "http://localhost:3000",
-            "https://localhost:3000",
-            "http://10.0.2.2:5216",
-            "https://10.0.2.2:7223",
-            "https://healthcare-blog-frontend.vercel.app",
-            "https://healthcareblog-backend.onrender.com"
-            )
+        policy.SetIsOriginAllowed(origin => 
+                origin.StartsWith("http://localhost:") || 
+                origin.StartsWith("https://localhost:") || 
+                origin.EndsWith(".vercel.app") ||
+                origin == "http://10.0.2.2:5216" ||
+                origin == "https://10.0.2.2:7223" ||
+                origin == "https://healthcareblog-backend.onrender.com"
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
