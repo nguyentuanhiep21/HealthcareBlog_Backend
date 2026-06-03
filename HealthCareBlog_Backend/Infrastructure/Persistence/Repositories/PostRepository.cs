@@ -46,7 +46,7 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
         var today = DateTime.UtcNow.Date;
         var tomorrow = today.AddDays(1);
 
-        return await _dbSet
+        var trendingPosts = await _dbSet
             .Include(p => p.User)
                 .ThenInclude(u => u.Followers)
             .Include(p => p.Likes)
@@ -55,6 +55,27 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
             .OrderByDescending(p => p.LikeCount + p.CommentCount)
             .Take(3)
             .ToListAsync();
+
+        if (trendingPosts.Count < 3)
+        {
+            var needed = 3 - trendingPosts.Count;
+            var existingIds = trendingPosts.Select(p => p.Id).ToList();
+
+            var extraPosts = await _dbSet
+                .Include(p => p.User)
+                    .ThenInclude(u => u.Followers)
+                .Include(p => p.Likes)
+                .Include(p => p.SavedByUsers)
+                .Where(p => !existingIds.Contains(p.Id))
+                .OrderByDescending(p => p.LikeCount + p.CommentCount)
+                .ThenByDescending(p => p.CreatedAt)
+                .Take(needed)
+                .ToListAsync();
+
+            trendingPosts.AddRange(extraPosts);
+        }
+
+        return trendingPosts;
     }
 
     public async Task<List<Post>> GetByUserIdAsync(string userId, int page, int pageSize)
