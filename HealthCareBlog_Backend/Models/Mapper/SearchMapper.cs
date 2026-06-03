@@ -18,7 +18,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 AuthorFollowingCount = post.User?.FollowingCount ?? 0,
                 Content = post.Content,
                 ImageUrl = post.ImageUrl,
-                ImageUrls = post.ImageUrls,
+                ImageUrls = !string.IsNullOrEmpty(post.ImageUrls) ? (System.Text.Json.JsonSerializer.Deserialize<List<string>>(post.ImageUrls) ?? new List<string>()) : new List<string>(),
                 UploadTime = post.CreatedAt,
                 LikeCount = post.LikeCount,
                 CommentCount = post.CommentCount,
