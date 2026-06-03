@@ -34,4 +34,7 @@ public interface IPostRepository : IRepository<Post>
 
     /// <summary>Xóa toàn bộ likes của 1 post (dùng khi xóa post)</summary>
     Task RemoveAllLikesByPostIdAsync(int postId);
+
+    /// <summary>Xóa các dữ liệu liên quan (Comments, SavedPosts, Notifications) khi xóa Post</summary>
+    Task RemoveRelatedDataByPostIdAsync(int postId);
 }

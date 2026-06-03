@@ -116,4 +116,30 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
         if (likes.Any())
             _context.LikePosts.RemoveRange(likes);
     }
+
+    public async Task RemoveRelatedDataByPostIdAsync(int postId)
+    {
+        var commentIds = await _context.Comments
+            .Where(c => c.PostId == postId)
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        if (commentIds.Any())
+        {
+            var likeComments = await _context.LikeComments.Where(lc => commentIds.Contains(lc.CommentId)).ToListAsync();
+            if (likeComments.Any()) _context.LikeComments.RemoveRange(likeComments);
+
+            var commentNotifications = await _context.Notifications.Where(n => n.CommentId != null && commentIds.Contains(n.CommentId.Value)).ToListAsync();
+            if (commentNotifications.Any()) _context.Notifications.RemoveRange(commentNotifications);
+
+            var comments = await _context.Comments.Where(c => commentIds.Contains(c.Id)).ToListAsync();
+            if (comments.Any()) _context.Comments.RemoveRange(comments);
+        }
+
+        var savedPosts = await _context.SavedPosts.Where(sp => sp.PostId == postId).ToListAsync();
+        if (savedPosts.Any()) _context.SavedPosts.RemoveRange(savedPosts);
+
+        var postNotifications = await _context.Notifications.Where(n => n.PostId == postId).ToListAsync();
+        if (postNotifications.Any()) _context.Notifications.RemoveRange(postNotifications);
+    }
 }

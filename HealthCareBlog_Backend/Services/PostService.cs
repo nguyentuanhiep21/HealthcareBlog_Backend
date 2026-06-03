@@ -183,6 +183,9 @@ public class PostService : IPostService
         // Xóa likes của post
         await _postRepository.RemoveAllLikesByPostIdAsync(postId);
 
+        // Xóa các dữ liệu liên đới (Comments, SavedPosts, Notifications)
+        await _postRepository.RemoveRelatedDataByPostIdAsync(postId);
+
         _postRepository.Remove(post);
         await _postRepository.SaveChangesAsync();
 
