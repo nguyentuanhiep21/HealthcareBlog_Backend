@@ -37,5 +37,36 @@ namespace HealthCareBlog_Backend.Services
             var publicUrl = _supabaseClient.Storage.From(bucketName).GetPublicUrl(storagePath);
             return publicUrl;
         }
+
+        public async Task DeleteFileAsync(string fileUrl)
+        {
+            if (string.IsNullOrEmpty(fileUrl)) return;
+
+            try
+            {
+                var bucketName = _configuration["Supabase:Bucket"] ?? "HealthcareBlog_Image";
+
+                // Extract storage path from public URL
+                // Public URL format: https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
+                var marker = $"/object/public/{bucketName}/";
+                var idx = fileUrl.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                if (idx < 0)
+                {
+                    Console.WriteLine($"[SupabaseStorageService] Could not extract path from URL: {fileUrl}");
+                    return;
+                }
+
+                var storagePath = fileUrl[(idx + marker.Length)..];
+                await _supabaseClient.Storage
+                    .From(bucketName)
+                    .Remove(new List<string> { storagePath });
+
+                Console.WriteLine($"[SupabaseStorageService] Deleted: {storagePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SupabaseStorageService] DeleteFileAsync error: {ex.Message}");
+            }
+        }
     }
 }

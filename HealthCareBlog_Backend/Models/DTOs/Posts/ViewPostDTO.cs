@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace HealthCareBlog_Backend.Models.DTOs.Posts
 {
@@ -8,7 +8,8 @@ namespace HealthCareBlog_Backend.Models.DTOs.Posts
         public string AuthorId { get; set; } = string.Empty; // ID tác giả
         public DateTime UploadTime { get; set; } // Thời gian tải lên
         public string Content { get; set; } = string.Empty; // Nội dung bài viết
-        public string? ImageUrl { get; set; } // URL ảnh đơn (nếu có)
+        public string? ImageUrl { get; set; } // URL ảnh đơn — backward compat
+        public List<string> ImageUrls { get; set; } = new List<string>(); // Danh sách URL ảnh (tối đa 5)
         public int LikeCount { get; set; } // Số lượt thích
         public int CommentCount { get; set; } // Số bình luận
         public bool IsLikedByCurrentUser { get; set; } // Người dùng hiện tại đã thích bài viết chưa

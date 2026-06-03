@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthCareBlog_Backend.Models.Entities;
@@ -20,7 +20,10 @@ public class Post
 
   [Column("image_url")]
   [StringLength(500)]
-  public string? ImageUrl { get; set; } // URL ảnh đơn (nếu có)
+  public string? ImageUrl { get; set; } // URL ảnh đơn (nếu có) — giữ để backward compat
+
+  [Column("image_urls")]
+  public string? ImageUrls { get; set; } // JSON array các URL ảnh (tối đa 5), ví dụ: ["url1","url2"]
 
   [Column("created_at")]
   public DateTime CreatedAt { get; set; } // Thời gian tạo bài
