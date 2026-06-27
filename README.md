@@ -75,3 +75,15 @@ Xem [appsettings.json](HealthCareBlog_Backend/HealthCareBlog_Backend/appsettings
     "FrontendUrl": "http://localhost:3000"
 }
 ```
+
+## 🧠 Core Logic: Meal Suggestion Flow
+Chức năng "Gợi ý thực đơn":
+
+1. **AI Health Assessment (`POST /api/HealthAssessment/assess`)**
+   - Sử dụng **Machine Learning Model** (`health_model.onnx` - TreeEnsembleRegressor).
+   - Nhận 5 tham số đầu vào của user: `Gender`, `Age`, `Height`, `Weight`, `Goal`.
+   - Dự đoán chính xác lượng dinh dưỡng mục tiêu: `Calories`, `Protein`, `Carbs`, `Fat`.
+
+2. **Meal Suggestion (`POST /api/MealSuggestion/recommend`)**
+   - Dựa trên lượng `Calories` mục tiêu từ AI, tự động phân bổ theo các bữa: Sáng (25%), Trưa (35%), Tối (30%), 2 Bữa Phụ (Mỗi bữa 5%).
+   - Query lấy món ăn ngẫu nhiên (`ORDER BY RANDOM()`) từ Database khớp với mục tiêu (`goal`) và loại bữa ăn (`mealType`), với biên độ Calo cho phép từ `±15%` đến `±30%`.
