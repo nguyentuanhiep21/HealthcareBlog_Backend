@@ -1,10 +1,10 @@
-using HealthCareBlog_Backend.Application.Interfaces.Repositories;
+using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Data;
 using HealthCareBlog_Backend.Models.DTOs.Users;
 using HealthCareBlog_Backend.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace HealthCareBlog_Backend.Infrastructure.Persistence.Repositories;
+namespace HealthCareBlog_Backend.Repositories;
 
 /// <summary>
 /// EF Core implementation của IUserRepository.

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using HealthCareBlog_Backend.Application.Interfaces.Repositories;
+using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Exceptions;
 using HealthCareBlog_Backend.Helpers;
 using HealthCareBlog_Backend.Models.DTOs.Comments;

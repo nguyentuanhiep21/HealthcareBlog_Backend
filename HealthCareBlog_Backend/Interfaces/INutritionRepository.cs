@@ -1,7 +1,7 @@
 using HealthCareBlog_Backend.Models.DTOs;
 using HealthCareBlog_Backend.Models.Entities;
 
-namespace HealthCareBlog_Backend.Application.Interfaces.Repositories;
+namespace HealthCareBlog_Backend.Interfaces;
 
 /// <summary>
 /// Repository interface cho Nutrition — NutritionProfile, ChatSession, ChatMessage.

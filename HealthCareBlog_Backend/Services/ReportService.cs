@@ -1,4 +1,4 @@
-using HealthCareBlog_Backend.Application.Interfaces.Repositories;
+using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Exceptions;
 using HealthCareBlog_Backend.Models.DTOs.Reports;
 using HealthCareBlog_Backend.Models.Entities;

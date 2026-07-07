@@ -1,11 +1,11 @@
-using HealthCareBlog_Backend.Application.Interfaces.Repositories;
+using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Data;
 using HealthCareBlog_Backend.Models.DTOs.Posts;
 using HealthCareBlog_Backend.Models.Entities;
 using HealthCareBlog_Backend.Models.Mapper;
 using Microsoft.EntityFrameworkCore;
 
-namespace HealthCareBlog_Backend.Infrastructure.Persistence.Repositories;
+namespace HealthCareBlog_Backend.Repositories;
 
 /// <summary>
 /// EF Core implementation của ISavedPostRepository.

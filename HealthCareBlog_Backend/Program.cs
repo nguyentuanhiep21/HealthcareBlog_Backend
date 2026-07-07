@@ -8,9 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.OpenApi.Models;
-using HealthCareBlog_Backend.Application.Interfaces.Repositories;
-using HealthCareBlog_Backend.Infrastructure.Persistence.Repositories;
-using HealthCareBlog_Backend.Presentation.Middleware;
+using HealthCareBlog_Backend.Interfaces;
+using HealthCareBlog_Backend.Repositories;
+using HealthCareBlog_Backend.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 

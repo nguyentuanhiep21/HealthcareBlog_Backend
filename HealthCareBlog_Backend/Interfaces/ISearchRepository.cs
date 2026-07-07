@@ -1,6 +1,6 @@
 using HealthCareBlog_Backend.Models.DTOs.Search;
 
-namespace HealthCareBlog_Backend.Application.Interfaces.Repositories;
+namespace HealthCareBlog_Backend.Interfaces;
 
 /// <summary>
 /// Repository interface cho Search — tập trung toàn bộ EF queries tìm kiếm.

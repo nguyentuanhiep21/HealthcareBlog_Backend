@@ -2,7 +2,7 @@ using System.Net;
 using System.Text.Json;
 using HealthCareBlog_Backend.Exceptions;
 
-namespace HealthCareBlog_Backend.Presentation.Middleware;
+namespace HealthCareBlog_Backend.Middleware;
 
 /// <summary>
 /// Global exception handler — bắt tất cả exception chưa được xử lý trong toàn bộ app.

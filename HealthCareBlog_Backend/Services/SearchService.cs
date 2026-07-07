@@ -1,4 +1,4 @@
-using HealthCareBlog_Backend.Application.Interfaces.Repositories;
+using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Models.DTOs.Search;
 using HealthCareBlog_Backend.Services.Interfaces;
 

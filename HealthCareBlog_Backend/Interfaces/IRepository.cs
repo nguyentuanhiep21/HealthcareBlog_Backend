@@ -1,4 +1,4 @@
-namespace HealthCareBlog_Backend.Application.Interfaces.Repositories;
+namespace HealthCareBlog_Backend.Interfaces;
 
 /// <summary>
 /// Generic repository interface — định nghĩa các thao tác CRUD cơ bản cho mọi entity.
