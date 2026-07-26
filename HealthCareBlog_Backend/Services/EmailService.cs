@@ -1,6 +1,7 @@
 using HealthCareBlog_Backend.Services.Interfaces;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 using System.Net;
-using System.Net.Mail;
 
 namespace HealthCareBlog_Backend.Services
 {
@@ -17,26 +18,24 @@ namespace HealthCareBlog_Backend.Services
         {
             try
             {
-                var smtpClient = new SmtpClient(_configuration["EmailSettings:SmtpHost"])
+                var apiKey = _configuration["EmailSettings:SendGridApiKey"];
+                var client = new SendGridClient(apiKey);
+                var from = new EmailAddress(_configuration["EmailSettings:FromEmail"], _configuration["EmailSettings:FromName"]);
+                var to = new EmailAddress(toEmail);
+                var msg = MailHelper.CreateSingleEmail(from, to, subject, "", htmlContent);
+                
+                var response = await client.SendEmailAsync(msg);
+                
+                if (response.IsSuccessStatusCode)
                 {
-                    Port = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587"),
-                    Credentials = new NetworkCredential(
-                        _configuration["EmailSettings:SmtpUsername"],
-                        _configuration["EmailSettings:SmtpPassword"]),
-                    EnableSsl = true,
-                };
-
-                var mailMessage = new MailMessage
+                    Console.WriteLine($"✅ Email sent successfully to: {toEmail}");
+                }
+                else
                 {
-                    From = new MailAddress(_configuration["EmailSettings:FromEmail"]!),
-                    Subject = subject,
-                    Body = htmlContent,
-                    IsBodyHtml = true,
-                };
-                mailMessage.To.Add(toEmail);
-
-                await smtpClient.SendMailAsync(mailMessage);
-                Console.WriteLine($"✅ Email sent successfully to: {toEmail}");
+                    var errorBody = await response.Body.ReadAsStringAsync();
+                    Console.WriteLine($"❌ Failed to send email to {toEmail}. SendGrid Error: {errorBody}");
+                    throw new Exception($"SendGrid Error: {errorBody}");
+                }
             }
             catch (Exception ex)
             {
