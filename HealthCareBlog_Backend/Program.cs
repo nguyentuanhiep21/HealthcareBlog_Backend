@@ -75,7 +75,7 @@ builder.Services.AddSwaggerGen(options =>
         Contact = new OpenApiContact
         {
             Name = "Support Team",
-            Email = "support@healthcareblog.com"
+            Email = "healthcareblog.support@gmail.com"
         }
     });
 
