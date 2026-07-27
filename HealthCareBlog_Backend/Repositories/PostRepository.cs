@@ -30,7 +30,7 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 100) pageSize = 100;
 
-        return await _dbSet
+        var posts = await _dbSet
             .Include(p => p.User)
                 .ThenInclude(u => u.Followers)
             .Include(p => p.Likes)
@@ -39,6 +39,10 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
+            
+        // Xáo trộn thứ tự các bài viết trong trang để tạo cảm giác random
+        var random = new Random();
+        return posts.OrderBy(x => random.Next()).ToList();
     }
 
     public async Task<List<Post>> GetTrendingTodayAsync()
