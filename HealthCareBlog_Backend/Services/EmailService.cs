@@ -51,26 +51,37 @@ namespace HealthCareBlog_Backend.Services
 
             var emailSubject = "Xác nhận tài khoản HealthCareBlog";
             var emailBody = $@"
-                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                    <h2 style='color: #2c3e50;'>Chào mừng đến với HealthCareBlog!</h2>
-                    <p>Xin chào,</p>
-                    <p>Cảm ơn bạn đã đăng ký tài khoản tại HealthCareBlog. Để hoàn tất quá trình đăng ký, vui lòng xác nhận email của bạn bằng cách nhấp vào nút bên dưới:</p>
-                    
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{verificationUrl}' 
-                           style='background-color: #6EC177; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
-                            Xác nhận Email
-                        </a>
+                <div style='font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; color: #334155;'>
+                    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);'>
+                        <div style='background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); padding: 30px; text-align: center;'>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;'>Sức Khỏe</h1>
+                        </div>
+                        <div style='padding: 40px 30px;'>
+                            <h2 style='color: #0f172a; font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 20px;'>Chào mừng bạn đến với cộng đồng!</h2>
+                            <p style='margin-bottom: 16px; font-size: 16px; line-height: 1.6;'>Xin chào,</p>
+                            <p style='margin-bottom: 24px; font-size: 16px; line-height: 1.6;'>Cảm ơn bạn đã đăng ký tài khoản tại HealthCareBlog. Để hoàn tất quá trình đăng ký và bắt đầu chia sẻ kiến thức, vui lòng xác nhận địa chỉ email của bạn bằng cách nhấp vào nút bên dưới:</p>
+                            
+                            <div style='text-align: center; margin: 35px 0;'>
+                                <a href='{verificationUrl}' 
+                                   style='background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px 0 rgba(8, 145, 178, 0.39);'>
+                                    Xác Nhận Email
+                                </a>
+                            </div>
+                            
+                            <div style='background-color: #fff1f2; border-left: 4px solid #f43f5e; padding: 12px 16px; border-radius: 0 4px 4px 0; margin-bottom: 24px;'>
+                                <p style='color: #be123c; font-size: 14px; margin: 0;'>
+                                    <strong>Lưu ý:</strong> Liên kết này sẽ hết hạn sau 24 giờ. Nếu bạn không thực hiện việc đăng ký này, vui lòng bỏ qua email này.
+                                </p>
+                            </div>
+                            
+                            <p style='font-size: 16px; line-height: 1.6; margin-bottom: 0;'>Trân trọng,<br>Đội ngũ HealthCareBlog</p>
+                        </div>
+                        <div style='background-color: #f1f5f9; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;'>
+                            <p style='font-size: 13px; color: #64748b; margin: 0;'>
+                                Email này được gửi tự động từ hệ thống HealthCareBlog. Vui lòng không trả lời email này.
+                            </p>
+                        </div>
                     </div>
-                    
-                    <p style='color: #e74c3c; font-size: 14px;'>
-                        <strong>Lưu ý:</strong> Liên kết này sẽ hết hạn sau 24 giờ. Nếu bạn không thực hiện việc đăng ký này, vui lòng bỏ qua email này.
-                    </p>
-                    
-                    <hr style='margin: 30px 0; border: none; border-top: 1px solid #ecf0f1;'>
-                    <p style='font-size: 12px; color: #7f8c8d;'>
-                        Email này được gửi tự động từ hệ thống HealthCareBlog. Vui lòng không trả lời email này.
-                    </p>
                 </div>";
 
             await SendEmailAsync(email, emailSubject, emailBody);
@@ -83,26 +94,37 @@ namespace HealthCareBlog_Backend.Services
 
             var emailSubject = "Đặt lại mật khẩu HealthCareBlog";
             var emailBody = $@"
-                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                    <h2 style='color: #2c3e50;'>Đặt lại mật khẩu HealthCareBlog</h2>
-                    <p>Xin chào,</p>
-                    <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Để tiếp tục, vui lòng nhấp vào nút bên dưới:</p>
-                    
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{resetUrl}' 
-                           style='background-color: #6EC177; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;'>
-                            Đặt lại mật khẩu
-                        </a>
+                <div style='font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; color: #334155;'>
+                    <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);'>
+                        <div style='background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); padding: 30px; text-align: center;'>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;'>Sức Khỏe</h1>
+                        </div>
+                        <div style='padding: 40px 30px;'>
+                            <h2 style='color: #0f172a; font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 20px;'>Đặt lại mật khẩu</h2>
+                            <p style='margin-bottom: 16px; font-size: 16px; line-height: 1.6;'>Xin chào,</p>
+                            <p style='margin-bottom: 24px; font-size: 16px; line-height: 1.6;'>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn tại HealthCareBlog. Để tiếp tục, vui lòng nhấp vào nút bên dưới để thiết lập mật khẩu mới:</p>
+                            
+                            <div style='text-align: center; margin: 35px 0;'>
+                                <a href='{resetUrl}' 
+                                   style='background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px 0 rgba(8, 145, 178, 0.39);'>
+                                    Đặt Lại Mật Khẩu
+                                </a>
+                            </div>
+                            
+                            <div style='background-color: #fff1f2; border-left: 4px solid #f43f5e; padding: 12px 16px; border-radius: 0 4px 4px 0; margin-bottom: 24px;'>
+                                <p style='color: #be123c; font-size: 14px; margin: 0;'>
+                                    <strong>Lưu ý bảo mật:</strong> Liên kết này sẽ hết hạn sau 1 giờ. Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này và tài khoản của bạn sẽ vẫn an toàn.
+                                </p>
+                            </div>
+                            
+                            <p style='font-size: 16px; line-height: 1.6; margin-bottom: 0;'>Trân trọng,<br>Đội ngũ HealthCareBlog</p>
+                        </div>
+                        <div style='background-color: #f1f5f9; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;'>
+                            <p style='font-size: 13px; color: #64748b; margin: 0;'>
+                                Email này được gửi tự động từ hệ thống HealthCareBlog. Vui lòng không trả lời email này.
+                            </p>
+                        </div>
                     </div>
-                    
-                    <p style='color: #e74c3c; font-size: 14px;'>
-                        <strong>Lưu ý:</strong> Liên kết này sẽ hết hạn sau 1 giờ vì lý do bảo mật. Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này và tài khoản của bạn sẽ vẫn an toàn.
-                    </p>
-                    
-                    <hr style='margin: 30px 0; border: none; border-top: 1px solid #ecf0f1;'>
-                    <p style='font-size: 12px; color: #7f8c8d;'>
-                        Email này được gửi tự động từ hệ thống HealthCareBlog. Vui lòng không trả lời email này.
-                    </p>
                 </div>";
 
             await SendEmailAsync(email, emailSubject, emailBody);
