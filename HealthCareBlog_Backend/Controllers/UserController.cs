@@ -175,6 +175,15 @@ public class UserController : ControllerBase
         return Ok(account);
     }
 
+    [HttpPut("banner")]
+    [Authorize]
+    public async Task<ActionResult<ViewAccountDTO>> UpdateBanner([FromBody] UpdateBannerDTO dto)
+    {
+        var userId = User.GetUserId()!;
+        var account = await _userService.UpdateBannerAsync(userId, dto.BannerUrl);
+        return Ok(account);
+    }
+
     [HttpPost("{userId}/report")]
     [Authorize]
     public async Task<ActionResult<ViewReportDTO>> ReportUser(string userId, [FromBody] CreateUserReportDTO dto)

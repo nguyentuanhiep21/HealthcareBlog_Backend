@@ -252,6 +252,22 @@ public class UserService : IUserService
         return await user.ToViewAccountDTOAsync(_userManager);
     }
 
+    public async Task<ViewAccountDTO> UpdateBannerAsync(string userId, string bannerUrl)
+    {
+        var user = await _userManager.FindByIdAsync(userId)
+            ?? throw new NotFoundException("User not found.");
+
+        if (!string.IsNullOrEmpty(user.BannerUrl))
+            FileHelper.DeleteBanner(user.BannerUrl);
+
+        user.BannerUrl = bannerUrl;
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            throw new BadRequestException("Failed to update banner: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+
+        return await user.ToViewAccountDTOAsync(_userManager);
+    }
+
     public async Task<bool> DeleteUserAsync(string userId)
     {
         var user = await _userManager.FindByIdAsync(userId)

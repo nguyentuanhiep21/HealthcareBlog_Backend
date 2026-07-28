@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **HealthcareBlog_Backend** (1970 symbols, 5258 relationships, 166 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **HealthcareBlog_Backend** (1981 symbols, 5269 relationships, 167 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -41,3 +41,77 @@ This project is indexed by GitNexus as **HealthcareBlog_Backend** (1970 symbols,
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+<!-- begin:backend-rules -->
+
+# C# .NET Clean Architecture Rules & Guidelines
+
+## 1. Project Structure & Dependency Flow
+Enforce Clean Architecture layer separation. Dependencies MUST pointing INWARD only:
+`Web.API` -> `Infrastructure` -> `Application` -> `Domain`
+
+- **Domain Layer (`Core/Domain`)**: 
+  - Contains Entities, Value Objects, Domain Events, Enums, and Repository Interfaces.
+  - Zero external dependencies! (NO EF Core, NO ASP.NET, NO third-party packages except C# primitives/guards).
+- **Application Layer (`Core/Application`)**:
+  - Contains Use Cases (CQRS Commands/Queries), DTOs, Mapping, and Service Interfaces.
+  - Depends ONLY on the `Domain` layer.
+- **Infrastructure Layer (`Infrastructure`)**:
+  - Contains EF Core DbContext, External Services integration (Email, Supabase, Payment), Repositories implementations.
+- **Web.API Layer (`Presentation/Web.API`)**:
+  - Contains Controllers / Minimal APIs, Middlewares, Program.cs DI configurations.
+
+---
+
+## 2. C# Language & Modern Code Quality
+- **Language Level**: Use modern C# features (C# 12+ / .NET 8+).
+- **Immutability**: Prefer `record` for DTOs, Commands, Queries, and Value Objects.
+- **Nullable Context**: `<Nullable>enable</Nullable>` is mandatory. Avoid using `!` (null-forgiving) unless strictly necessary.
+- **Async/Await**: 
+  - All I/O operations MUST be async (`async Task<T>`).
+  - Always pass `CancellationToken` down to the DB/I/O level.
+- **Primary Constructors**: Use primary constructors for Dependency Injection in classes and record definitions.
+
+---
+
+## 3. Application Layer & CQRS Pattern
+- Implement CQRS using **MediatR** (or explicit Command/Query handlers).
+- Organize code by **Feature/Vertical Slices** within Application:
+  `Features/[FeatureName]/Commands/Create[Entity]/`
+  - `Create[Entity]Command.cs` (MediatR `IRequest<Result<T>>`)
+  - `Create[Entity]CommandHandler.cs`
+  - `Create[Entity]CommandValidator.cs` (FluentValidation)
+- **DTO Isolation**: NEVER return Domain Entities directly from API or Application Layer. ALWAYS map to DTOs.
+- **Validation**: Use **FluentValidation** for automatic command/query validation via MediatR pipeline behaviors.
+
+---
+
+## 4. Entity Framework Core & Data Access
+- **Encapsulation**: Use private setters or `init` properties for Entities. Enforce business logic through Entity methods.
+- **Queries Optimization**:
+  - Use `.AsNoTracking()` for ALL read-only queries.
+  - Avoid N+1 queries using explicit `.Include()` / `.ThenInclude()` or Projection (`.Select()`).
+- **Configuration**: Use `IEntityTypeConfiguration<T>` in Infrastructure layer instead of attributes on Domain Entities.
+
+---
+
+## 5. API Design & Global Error Handling
+- **Controllers / Endpoints**: Keep them thin! Delegates business execution to MediatR (`IMediator.Send()`).
+- **RESTful Naming**: Plural nouns for routes (e.g., `api/v1/users`). Explicit status codes (200, 201, 400, 404, 500).
+- **Error Handling**: 
+  - Do NOT use exceptions for control flow. Use a **Result Pattern** (`Result<T>` or `OneOf`).
+  - Handle unexpected exceptions globally via `IExceptionHandler` middleware producing **RFC 7807 ProblemDetails** JSON responses.
+
+---
+
+## 6. Code Generation Checklist for AI
+When generating new features, always generate code in this order:
+1. **Domain Entity / Value Object** (if new)
+2. **Repository Interface** (in Domain)
+3. **Command/Query & DTOs** (in Application)
+4. **Validator** (in Application)
+5. **CommandHandler / QueryHandler** (in Application)
+6. **EF Core Configuration & Repository Implementation** (in Infrastructure)
+7. **Controller / Minimal API Endpoint** (in Web.API)
+
+<!-- end:backend-rules -->

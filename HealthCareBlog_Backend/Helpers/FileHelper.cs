@@ -56,6 +56,21 @@ namespace HealthCareBlog_Backend.Helpers
         }
 
         /// <summary>
+        /// Delete banner file
+        /// </summary>
+        /// <param name="bannerUrl">Banner URL</param>
+        /// <returns>True if deleted successfully, false otherwise</returns>
+        public static bool DeleteBanner(string bannerUrl)
+        {
+            if (string.IsNullOrEmpty(bannerUrl) || !bannerUrl.StartsWith("/uploads/banners/"))
+            {
+                return false;
+            }
+
+            return DeleteFile(bannerUrl);
+        }
+
+        /// <summary>
         /// Delete post image file
         /// </summary>
         /// <param name="imageUrl">Image URL</param>

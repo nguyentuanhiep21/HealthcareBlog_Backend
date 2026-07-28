@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -66,6 +66,10 @@ public class User : IdentityUser
     [Column("avatar_url")]
     [StringLength(500)]
     public string? AvatarUrl { get; set; }
+
+    [Column("banner_url")]
+    [StringLength(500)]
+    public string? BannerUrl { get; set; }
 
     [Column("is_available")]
     public bool IsAvailable { get; set; } = true;

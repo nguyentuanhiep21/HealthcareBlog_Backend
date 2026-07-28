@@ -1,4 +1,4 @@
-﻿using HealthCareBlog_Backend.Models.DTOs.Users;
+using HealthCareBlog_Backend.Models.DTOs.Users;
 
 namespace HealthCareBlog_Backend.Services.Interfaces
 {
@@ -17,6 +17,7 @@ namespace HealthCareBlog_Backend.Services.Interfaces
         Task<ViewAccountDTO> UpdateAccountInfoAsync(string userId, UpdateAccountDTO updateAccountDTO);
         Task<List<SuggestedUserDTO>> GetSuggestedUsersAsync(string? currentUserId);
         Task<ViewAccountDTO> UpdateAvatarAsync(string userId, string avatarUrl);
+        Task<ViewAccountDTO> UpdateBannerAsync(string userId, string bannerUrl);
         
         // Admin methods
         Task<List<AdminUserDTO>> GetAllUsersAsync(int page = 1, int pageSize = 20, string? searchQuery = null);
