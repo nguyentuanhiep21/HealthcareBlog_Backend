@@ -19,6 +19,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 PhoneNumber = user.PhoneNumber,
                 Bio = user.Bio,
                 AvatarUrl = user.AvatarUrl,
+                BannerUrl = user.BannerUrl,
                 FollowerCount = user.FollowerCount,
                 FollowingCount = user.FollowingCount,
                 IsAdmin = roles.Contains("Admin")
@@ -35,6 +36,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 LastName = user.LastName,
                 Bio = user.Bio,
                 AvatarUrl = user.AvatarUrl,
+                BannerUrl = user.BannerUrl,
                 FollowerCount = user.Followers?.Count ?? 0,
                 FollowingCount = user.FollowingCount,
                 PostCount = user.PostCount,
