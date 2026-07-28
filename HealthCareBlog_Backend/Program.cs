@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Repositories;
 using HealthCareBlog_Backend.Middleware;
+using HealthCareBlog_Backend.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDataProtection();
+builder.Services.AddSignalR();
 
 // Configure Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -59,6 +61,20 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!)),
         ClockSkew = TimeSpan.Zero
+    };
+    // SignalR truyền JWT qua query string (vì WebSocket kông hỗ trợ header)
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -130,6 +146,7 @@ builder.Services.AddScoped<INutritionService, NutritionService>();
 builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 builder.Services.AddSingleton<IHealthAssessmentService, HealthAssessmentService>();
 builder.Services.AddScoped<IMealSuggestionService, MealSuggestionService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 // Register Repositories
 builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -142,6 +159,7 @@ builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<ISearchRepository, SearchRepository>();
 builder.Services.AddScoped<INutritionRepository, NutritionRepository>();
 builder.Services.AddScoped<IMealSuggestionRepository, MealSuggestionRepository>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
 
 // Register Middleware
 builder.Services.AddTransient<GlobalExceptionHandlerMiddleware>();
@@ -251,5 +269,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

@@ -39,6 +39,10 @@ namespace HealthCareBlog_Backend.Data
         // Meal Suggestions
         public DbSet<Meal> Meals => Set<Meal>();
 
+        // Chat
+        public DbSet<Conversation> Conversations => Set<Conversation>();
+        public DbSet<Message> Messages => Set<Message>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -246,6 +250,45 @@ namespace HealthCareBlog_Backend.Data
 
                 entity.HasIndex(e => e.SessionId);
                 entity.HasIndex(e => e.CreatedAt);
+            });
+
+            // ========== CONVERSATION CONFIGURATION ==========
+            modelBuilder.Entity<Conversation>(entity =>
+            {
+                entity.HasOne(c => c.User1)
+                    .WithMany()
+                    .HasForeignKey(c => c.User1Id)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.User2)
+                    .WithMany()
+                    .HasForeignKey(c => c.User2Id)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.User1Id);
+                entity.HasIndex(e => e.User2Id);
+                entity.HasIndex(e => e.LastMessageAt);
+                // Unique constraint: mỗi cặp user chỉ có 1 conversation (normalized order)
+                entity.HasIndex(e => new { e.User1Id, e.User2Id }).IsUnique();
+            });
+
+            // ========== MESSAGE CONFIGURATION ==========
+            modelBuilder.Entity<Message>(entity =>
+            {
+                entity.HasOne(m => m.Conversation)
+                    .WithMany(c => c.Messages)
+                    .HasForeignKey(m => m.ConversationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(m => m.Sender)
+                    .WithMany()
+                    .HasForeignKey(m => m.SenderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.ConversationId);
+                entity.HasIndex(e => e.SenderId);
+                entity.HasIndex(e => e.CreatedAt);
+                entity.HasIndex(e => new { e.ConversationId, e.IsRead });
             });
 
             // ========== MEAL CONFIGURATION ==========
