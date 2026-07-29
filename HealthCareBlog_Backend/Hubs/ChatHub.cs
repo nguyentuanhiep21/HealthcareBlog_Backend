@@ -26,10 +26,12 @@ namespace HealthCareBlog_Backend.Hubs;
 public class ChatHub : Hub
 {
     private readonly IChatService _chatService;
+    private readonly IPresenceTracker _tracker;
 
-    public ChatHub(IChatService chatService)
+    public ChatHub(IChatService chatService, IPresenceTracker tracker)
     {
         _chatService = chatService;
+        _tracker = tracker;
     }
 
     // ===== Client → Server =====
@@ -120,6 +122,14 @@ public class ChatHub : Hub
         {
             // Mỗi user join group riêng để nhận notification toàn cục (unread count, v.v.)
             await Groups.AddToGroupAsync(Context.ConnectionId, GetUserGroup(userId));
+            
+            // Cập nhật trạng thái online
+            var isFirstConnection = await _tracker.UserConnected(userId, Context.ConnectionId);
+            if (isFirstConnection)
+            {
+                // Báo cho tất cả client biết user này vừa online
+                await Clients.All.SendAsync("UserIsOnline", userId);
+            }
         }
         await base.OnConnectedAsync();
     }
@@ -130,6 +140,14 @@ public class ChatHub : Hub
         if (userId is not null)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, GetUserGroup(userId));
+            
+            // Cập nhật trạng thái offline
+            var isLastConnection = await _tracker.UserDisconnected(userId, Context.ConnectionId);
+            if (isLastConnection)
+            {
+                // Báo cho tất cả client biết user này vừa offline
+                await Clients.All.SendAsync("UserIsOffline", userId);
+            }
         }
         await base.OnDisconnectedAsync(exception);
     }

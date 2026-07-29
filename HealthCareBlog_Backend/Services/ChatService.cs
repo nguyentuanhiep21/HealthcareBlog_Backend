@@ -8,10 +8,12 @@ namespace HealthCareBlog_Backend.Services;
 public class ChatService : IChatService
 {
     private readonly IChatRepository _chatRepository;
+    private readonly IPresenceTracker _presenceTracker;
 
-    public ChatService(IChatRepository chatRepository)
+    public ChatService(IChatRepository chatRepository, IPresenceTracker presenceTracker)
     {
         _chatRepository = chatRepository;
+        _presenceTracker = presenceTracker;
     }
 
     public async Task<List<ConversationDTO>> GetConversationsAsync(string userId, int page, int pageSize)
@@ -22,7 +24,12 @@ public class ChatService : IChatService
         foreach (var conv in conversations)
         {
             var unread = await _chatRepository.GetUnreadCountInConversationAsync(conv.Id, userId);
-            result.Add(MapToConversationDTO(conv, userId, unread));
+            
+            // Xác định user đối diện và check online status
+            var otherUserId = conv.User1Id == userId ? conv.User2Id : conv.User1Id;
+            var isOnline = await _presenceTracker.IsUserOnline(otherUserId);
+            
+            result.Add(MapToConversationDTO(conv, userId, unread, isOnline));
         }
         return result;
     }
@@ -34,7 +41,9 @@ public class ChatService : IChatService
 
         var conversation = await _chatRepository.GetOrCreateConversationAsync(currentUserId, targetUserId);
         var unread = await _chatRepository.GetUnreadCountInConversationAsync(conversation.Id, currentUserId);
-        return MapToConversationDTO(conversation, currentUserId, unread);
+        var isOnline = await _presenceTracker.IsUserOnline(targetUserId);
+        
+        return MapToConversationDTO(conversation, currentUserId, unread, isOnline);
     }
 
     public async Task<List<MessageDTO>?> GetMessagesAsync(string currentUserId, int conversationId, int page, int pageSize)
@@ -108,7 +117,7 @@ public class ChatService : IChatService
     private static bool IsMember(Conversation conversation, string userId)
         => conversation.User1Id == userId || conversation.User2Id == userId;
 
-    private static ConversationDTO MapToConversationDTO(Conversation conv, string currentUserId, int unreadCount)
+    private static ConversationDTO MapToConversationDTO(Conversation conv, string currentUserId, int unreadCount, bool isOnline)
     {
         // Lấy thông tin người kia
         var isUser1 = conv.User1Id == currentUserId;
@@ -122,7 +131,8 @@ public class ChatService : IChatService
                 Id = otherUser?.Id ?? string.Empty,
                 FullName = otherUser?.FullName ?? otherUser?.UserName ?? "Unknown",
                 AvatarUrl = otherUser?.AvatarUrl,
-                UserName = otherUser?.UserName
+                UserName = otherUser?.UserName,
+                IsOnline = isOnline
             },
             LastMessagePreview = conv.LastMessagePreview,
             LastMessageAt = conv.LastMessageAt,

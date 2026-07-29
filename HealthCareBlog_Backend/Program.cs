@@ -12,6 +12,7 @@ using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Repositories;
 using HealthCareBlog_Backend.Middleware;
 using HealthCareBlog_Backend.Hubs;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDataProtection();
-builder.Services.AddSignalR();
+
+// Lấy connection string của Redis
+var redisConnectionString = builder.Configuration["Redis:ConnectionString"] 
+    ?? throw new InvalidOperationException("Redis ConnectionString is missing.");
+
+// Đăng ký Redis ConnectionMultiplexer
+var multiplexer = ConnectionMultiplexer.Connect(redisConnectionString);
+builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+
+builder.Services.AddSignalR().AddStackExchangeRedis(redisConnectionString);
 
 // Configure Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -145,6 +155,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INutritionService, NutritionService>();
 builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 builder.Services.AddSingleton<IHealthAssessmentService, HealthAssessmentService>();
+builder.Services.AddSingleton<IPresenceTracker, RedisPresenceTracker>();
 builder.Services.AddScoped<IMealSuggestionService, MealSuggestionService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 
