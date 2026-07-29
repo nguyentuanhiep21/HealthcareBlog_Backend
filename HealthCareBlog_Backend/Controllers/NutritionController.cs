@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace HealthCareBlog_Backend.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/nutrition")]
 [Authorize]
 public class NutritionController : ControllerBase
 {

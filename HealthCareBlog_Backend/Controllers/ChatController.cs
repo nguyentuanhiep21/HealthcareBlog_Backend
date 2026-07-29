@@ -11,7 +11,7 @@ namespace HealthCareBlog_Backend.Controllers;
 /// Dùng để lấy lịch sử, danh sách conversations, unread count.
 /// Gửi tin nhắn thời gian thực qua SignalR Hub (/hubs/chat).
 /// </summary>
-[Route("api/[controller]")]
+[Route("api/chats")]
 [ApiController]
 [Authorize]
 public class ChatController : ControllerBase

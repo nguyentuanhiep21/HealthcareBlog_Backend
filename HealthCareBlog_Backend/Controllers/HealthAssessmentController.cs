@@ -10,7 +10,7 @@ namespace HealthCareBlog_Backend.Controllers;
 /// Endpoint này KHÔNG yêu cầu đăng nhập — có thể dùng công khai.
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/health-assessments")]
 public class HealthAssessmentController : ControllerBase
 {
     private readonly IHealthAssessmentService _assessmentService;

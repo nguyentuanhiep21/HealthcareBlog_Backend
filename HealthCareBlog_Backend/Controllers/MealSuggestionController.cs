@@ -10,7 +10,7 @@ namespace HealthCareBlog_Backend.Controllers;
 /// Mỗi lần gọi trả về combo món ăn khác nhau (ORDER BY RANDOM() tại DB).
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/meal-suggestions")]
 public class MealSuggestionController : ControllerBase
 {
     private readonly IMealSuggestionService _service;

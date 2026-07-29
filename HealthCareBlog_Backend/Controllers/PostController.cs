@@ -11,7 +11,7 @@ namespace HealthCareBlog_Backend.Controllers;
 /// PostController — chỉ xử lý HTTP request/response.
 /// Không còn try/catch lặp lại — lỗi được GlobalExceptionHandlerMiddleware bắt tập trung.
 /// </summary>
-[Route("api/[controller]")]
+[Route("api/posts")]
 [ApiController]
 public class PostController : ControllerBase
 {

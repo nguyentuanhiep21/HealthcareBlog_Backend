@@ -11,7 +11,7 @@ namespace HealthCareBlog_Backend.Controllers;
 /// CommentController — chỉ xử lý HTTP request/response.
 /// GlobalExceptionHandlerMiddleware bắt toàn bộ lỗi tập trung.
 /// </summary>
-[Route("api/[controller]")]
+[Route("api/comments")]
 [ApiController]
 public class CommentController : ControllerBase
 {

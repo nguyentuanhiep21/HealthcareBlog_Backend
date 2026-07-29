@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HealthCareBlog_Backend.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/notifications")]
 [ApiController]
 [Authorize]
 public class NotificationController : ControllerBase

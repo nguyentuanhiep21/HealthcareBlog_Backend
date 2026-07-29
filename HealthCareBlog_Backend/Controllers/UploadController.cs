@@ -4,7 +4,7 @@ using HealthCareBlog_Backend.Services.Interfaces;
 
 namespace HealthCareBlog_Backend.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/uploads")]
     [ApiController]
     public class UploadController : ControllerBase
     {

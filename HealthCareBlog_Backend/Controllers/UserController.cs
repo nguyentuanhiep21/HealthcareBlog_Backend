@@ -11,7 +11,7 @@ namespace HealthCareBlog_Backend.Controllers;
 /// UserController — chỉ xử lý HTTP request/response.
 /// GlobalExceptionHandlerMiddleware bắt toàn bộ lỗi, không cần try/catch ở đây.
 /// </summary>
-[Route("api/[controller]")]
+[Route("api/users")]
 [ApiController]
 public class UserController : ControllerBase
 {

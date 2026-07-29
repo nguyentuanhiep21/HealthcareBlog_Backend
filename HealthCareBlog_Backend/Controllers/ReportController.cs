@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HealthCareBlog_Backend.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/reports")]
 [ApiController]
 [Authorize]
 public class ReportController : ControllerBase

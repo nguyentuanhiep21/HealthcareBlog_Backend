@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HealthCareBlog_Backend.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/follows")]
 [ApiController]
 [Authorize]
 public class FollowController : ControllerBase
