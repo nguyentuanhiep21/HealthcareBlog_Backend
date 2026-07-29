@@ -54,6 +54,18 @@ namespace HealthCareBlog_Backend.Models.Mapper
             };
         }
 
+        public static TrendingPostDTO ToTrendingPostDTO(this Post post)
+        {
+            var imageUrls = ParseImageUrls(post);
+            return new TrendingPostDTO
+            {
+                Id = post.Id,
+                Content = post.Content,
+                ImageUrl = imageUrls.FirstOrDefault(),
+                AuthorName = post.User?.FullName ?? "Unknown"
+            };
+        }
+
         public static ViewPostDTO ToViewPostDTO(this Post post, string? userId)
         {
             var imageUrls = ParseImageUrls(post);
@@ -68,15 +80,15 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 CreatedAt = post.CreatedAt,
                 LikeCount = post.LikeCount,
                 CommentCount = post.CommentCount,
-                IsLikedByCurrentUser = userId != null && post.Likes.Any(like => like.UserId == userId),
-                IsSavedByCurrentUser = userId != null && post.SavedByUsers.Any(sp => sp.UserId == userId),
+                IsLikedByCurrentUser = userId != null && post.Likes != null && post.Likes.Any(like => like.UserId == userId),
+                IsSavedByCurrentUser = userId != null && post.SavedByUsers != null && post.SavedByUsers.Any(sp => sp.UserId == userId),
                 Author = new AuthorDTO
                 {
                     Id = post.User?.Id ?? "",
                     FullName = post.User?.FullName ?? "Unknown",
                     AvatarUrl = post.User?.AvatarUrl,
                     Bio = post.User?.Bio,
-                    IsFollowing = userId != null && post.User != null && post.User.Followers.Any(f => f.FollowerId == userId)
+                    IsFollowing = userId != null && post.User != null && post.User.Followers != null && post.User.Followers.Any(f => f.FollowerId == userId)
                 }
             };
         }

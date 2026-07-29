@@ -102,10 +102,16 @@ public class PostService : IPostService
         return posts.Select(p => p.ToViewPostDTO(userId)).ToList();
     }
 
-    public async Task<List<ViewPostDTO>> GetTrendingPostsAsync(string? userId)
+    public async Task<List<ViewPostDTO>> GetTrendingPostsOldAsync(string? userId)
     {
-        var posts = await _postRepository.GetTrendingTodayAsync();
-        return posts.Select(p => p.ToViewPostDTO(userId)).ToList();
+        var trendingPosts = await _postRepository.GetTrendingOldAsync();
+        return trendingPosts.Select(p => p.ToViewPostDTO(userId)).ToList();
+    }
+
+    public async Task<List<TrendingPostDTO>> GetTrendingPostsAsync()
+    {
+        var trendingPosts = await _postRepository.GetTrendingTodayAsync();
+        return trendingPosts.Select(p => p.ToTrendingPostDTO()).ToList();
     }
 
     public async Task<PostDetailDTO> CreatePostAsync(string authorId, CreatePostDTO createPostDTO)

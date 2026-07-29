@@ -51,9 +51,53 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
         return posts.OrderBy(x => random.Next()).ToList();
     }
 
+    public async Task<List<Post>> GetTrendingOldAsync()
+    {
+        var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+
+        var trendingPostsDb = await _dbSet
+            .Include(p => p.User).ThenInclude(u => u.Followers)
+            .Include(p => p.Likes)
+            .Include(p => p.SavedByUsers)
+            .Where(p => p.CreatedAt >= today && p.CreatedAt < tomorrow)
+            .OrderByDescending(p => p.LikeCount + p.CommentCount)
+            .Take(3)
+            .AsSplitQuery()
+            .ToListAsync();
+
+        if (trendingPostsDb.Count < 3)
+        {
+            var needed = 3 - trendingPostsDb.Count;
+            var existingIds = trendingPostsDb.Select(p => p.Id).ToList();
+            
+            var recentPosts = await _dbSet
+                .Include(p => p.User).ThenInclude(u => u.Followers)
+                .Include(p => p.Likes)
+                .Include(p => p.SavedByUsers)
+                .Where(p => !existingIds.Contains(p.Id))
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(50)
+                .AsSplitQuery()
+                .ToListAsync();
+
+            var extraPosts = recentPosts
+                .OrderByDescending(p => p.LikeCount + p.CommentCount)
+                .Take(needed)
+                .ToList();
+
+            trendingPostsDb.AddRange(extraPosts);
+        }
+        
+        return trendingPostsDb;
+    }
+
     public async Task<List<Post>> GetTrendingTodayAsync()
     {
         var db = _redis.GetDatabase();
+        var lastHour = DateTime.UtcNow.AddHours(-1);
+
+        List<Post>? trendingPostsRedis = null;
         var cachedIdsJson = await db.StringGetAsync("healthcareblog:trending_posts");
         
         if (!cachedIdsJson.IsNullOrEmpty)
@@ -63,61 +107,60 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
                 var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cachedIdsJson.ToString());
                 if (ids != null && ids.Count > 0)
                 {
-                    // Lấy bài viết theo ID từ DB
                     var posts = await _dbSet
                         .Include(p => p.User)
-                            .ThenInclude(u => u.Followers)
-                        .Include(p => p.Likes)
-                        .Include(p => p.SavedByUsers)
                         .Where(p => ids.Contains(p.Id))
                         .ToListAsync();
 
-                    // Giữ đúng thứ tự trending
-                    return ids.Select(id => posts.FirstOrDefault(p => p.Id == id))
-                              .Where(p => p != null)
-                              .ToList()!;
+                    trendingPostsRedis = ids.Select(id => posts.FirstOrDefault(p => p.Id == id))
+                                            .Where(p => p != null)
+                                            .ToList()!;
                 }
             }
-            catch
-            {
-                // Ignore parse errors and fallback
-            }
+            catch { }
         }
 
-        // Fallback: Chạy logic cũ nếu Redis chưa có hoặc lỗi
-        var today = DateTime.UtcNow.Date;
-        var tomorrow = today.AddDays(1);
+        if (trendingPostsRedis != null) 
+        {
+            return trendingPostsRedis;
+        }
 
-        var trendingPosts = await _dbSet
-            .Include(p => p.User)
-                .ThenInclude(u => u.Followers)
-            .Include(p => p.Likes)
-            .Include(p => p.SavedByUsers)
-            .Where(p => p.CreatedAt >= today && p.CreatedAt < tomorrow)
-            .OrderByDescending(p => p.LikeCount + p.CommentCount)
-            .Take(3)
+        // Fallback DB 1-hour logic
+        var trendingPostsDbIds = await _dbSet
+            .Where(p => p.CreatedAt >= lastHour)
+            .Select(p => p.Id)
             .ToListAsync();
 
-        if (trendingPosts.Count < 3)
+        if (trendingPostsDbIds.Count < 30)
         {
-            var needed = 3 - trendingPosts.Count;
-            var existingIds = trendingPosts.Select(p => p.Id).ToList();
-
-            var extraPosts = await _dbSet
-                .Include(p => p.User)
-                    .ThenInclude(u => u.Followers)
-                .Include(p => p.Likes)
-                .Include(p => p.SavedByUsers)
-                .Where(p => !existingIds.Contains(p.Id))
-                .OrderByDescending(p => p.LikeCount + p.CommentCount)
-                .ThenByDescending(p => p.CreatedAt)
+            var needed = 30 - trendingPostsDbIds.Count;
+            var recentPosts = await _dbSet
+                .Where(p => !trendingPostsDbIds.Contains(p.Id))
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => p.Id)
                 .Take(needed)
                 .ToListAsync();
 
-            trendingPosts.AddRange(extraPosts);
+            trendingPostsDbIds.AddRange(recentPosts);
         }
 
-        return trendingPosts;
+        var top3IdsDb = await _dbSet
+            .Where(p => trendingPostsDbIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.LikeCount, p.CommentCount })
+            .ToListAsync();
+
+        var finalDbIds = top3IdsDb
+            .OrderByDescending(p => p.LikeCount + p.CommentCount)
+            .Take(3)
+            .Select(p => p.Id)
+            .ToList();
+
+        var trendingPostsDb = await _dbSet
+            .Include(p => p.User)
+            .Where(p => finalDbIds.Contains(p.Id))
+            .ToListAsync();
+            
+        return finalDbIds.Select(id => trendingPostsDb.First(p => p.Id == id)).ToList();
     }
 
     public async Task<List<Post>> GetByUserIdAsync(string userId, int page, int pageSize)

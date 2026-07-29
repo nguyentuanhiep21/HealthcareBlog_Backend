@@ -34,12 +34,21 @@ public class PostController : ControllerBase
     }
 
     [HttpGet("trending")]
-    public async Task<ActionResult<List<ViewPostDTO>>> GetTrendingPosts()
+    public async Task<ActionResult<List<ViewPostDTO>>> GetTrendingPostsOld()
     {
         var userId = User.GetUserId();
-        var posts = await _postService.GetTrendingPostsAsync(userId);
+        var posts = await _postService.GetTrendingPostsOldAsync(userId);
         return Ok(posts);
     }
+
+    [HttpGet("trending-redis")]
+    public async Task<ActionResult<List<TrendingPostDTO>>> GetTrendingPostsRedis()
+    {
+        var posts = await _postService.GetTrendingPostsAsync();
+        return Ok(posts);
+    }
+
+
 
     [HttpGet("{postId:int}")]
     public async Task<ActionResult<PostDetailDTO>> GetPostById(int postId)

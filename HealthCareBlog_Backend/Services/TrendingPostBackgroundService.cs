@@ -28,8 +28,8 @@ public class TrendingPostBackgroundService : BackgroundService
         // Chạy ngay lần đầu khi service khởi động
         await UpdateTrendingPostsCacheAsync(stoppingToken);
 
-        // Sau đó lặp lại mỗi 20 phút
-        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(20));
+        // Sau đó lặp lại mỗi 1 tiếng
+        using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
         
         try
         {
@@ -51,38 +51,47 @@ public class TrendingPostBackgroundService : BackgroundService
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             
-            var today = DateTime.UtcNow.Date;
-            var tomorrow = today.AddDays(1);
+            var lastHour = DateTime.UtcNow.AddHours(-1);
 
             // Chỉ lấy Id, không kéo toàn bộ object (giảm tải memory & DB IO)
             var trendingPostIds = await dbContext.Posts
-                .Where(p => p.CreatedAt >= today && p.CreatedAt < tomorrow)
-                .OrderByDescending(p => p.LikeCount + p.CommentCount)
+                .Where(p => p.CreatedAt >= lastHour)
                 .Select(p => p.Id)
-                .Take(3)
                 .ToListAsync(cancellationToken);
 
-            if (trendingPostIds.Count < 3)
+            if (trendingPostIds.Count < 30)
             {
-                var needed = 3 - trendingPostIds.Count;
-                var extraPostIds = await dbContext.Posts
+                var needed = 30 - trendingPostIds.Count;
+                // Bù bài mới nhất nếu chưa đủ 30 bài
+                var recentPosts = await dbContext.Posts
                     .Where(p => !trendingPostIds.Contains(p.Id))
-                    .OrderByDescending(p => p.LikeCount + p.CommentCount)
-                    .ThenByDescending(p => p.CreatedAt)
+                    .OrderByDescending(p => p.CreatedAt)
                     .Select(p => p.Id)
                     .Take(needed)
                     .ToListAsync(cancellationToken);
 
-                trendingPostIds.AddRange(extraPostIds);
+                trendingPostIds.AddRange(recentPosts);
             }
 
+            // Lấy đủ 30 bài và tính Like + Comment để tìm Top 3
+            var top3Ids = await dbContext.Posts
+                .Where(p => trendingPostIds.Contains(p.Id))
+                .Select(p => new { p.Id, p.LikeCount, p.CommentCount })
+                .ToListAsync(cancellationToken);
+                
+            var finalTrendingIds = top3Ids
+                .OrderByDescending(p => p.LikeCount + p.CommentCount)
+                .Take(3)
+                .Select(p => p.Id)
+                .ToList();
+
             var db = _redis.GetDatabase();
-            var json = JsonSerializer.Serialize(trendingPostIds);
+            var json = JsonSerializer.Serialize(finalTrendingIds);
             
-            // Lưu vào Redis (TTL 25 phút để phòng hờ timer delay)
-            await db.StringSetAsync(TrendingPostsRedisKey, json, TimeSpan.FromMinutes(25));
+            // Lưu vào Redis (TTL 65 phút để phòng hờ timer delay)
+            await db.StringSetAsync(TrendingPostsRedisKey, json, TimeSpan.FromMinutes(65));
             
-            _logger.LogInformation($"Updated Trending Posts in Redis. IDs: {string.Join(", ", trendingPostIds)}");
+            _logger.LogInformation($"Updated Trending Posts in Redis. IDs: {string.Join(", ", finalTrendingIds)}");
         }
         catch (Exception ex)
         {

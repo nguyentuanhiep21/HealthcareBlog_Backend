@@ -14,6 +14,9 @@ public interface IPostRepository : IRepository<Post>
     /// <summary>Lấy danh sách post phân trang, sắp xếp mới nhất</summary>
     Task<List<Post>> GetPagedAsync(int page, int pageSize);
 
+    /// <summary>Lấy các post trending cũ (top 3 theo like + comment)</summary>
+    Task<List<Post>> GetTrendingOldAsync();
+
     /// <summary>Lấy các post trending trong ngày hôm nay (top 3 theo like + comment)</summary>
     Task<List<Post>> GetTrendingTodayAsync();
 
