@@ -2,6 +2,7 @@ using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Data;
 using HealthCareBlog_Backend.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace HealthCareBlog_Backend.Repositories;
 
@@ -11,7 +12,12 @@ namespace HealthCareBlog_Backend.Repositories;
 /// </summary>
 public class PostRepository : BaseRepository<Post>, IPostRepository
 {
-    public PostRepository(ApplicationDbContext context) : base(context) { }
+    private readonly IConnectionMultiplexer _redis;
+
+    public PostRepository(ApplicationDbContext context, IConnectionMultiplexer redis) : base(context) 
+    { 
+        _redis = redis;
+    }
 
     public async Task<Post?> GetByIdWithDetailsAsync(int postId)
         => await _dbSet
@@ -47,6 +53,38 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
 
     public async Task<List<Post>> GetTrendingTodayAsync()
     {
+        var db = _redis.GetDatabase();
+        var cachedIdsJson = await db.StringGetAsync("healthcareblog:trending_posts");
+        
+        if (!cachedIdsJson.IsNullOrEmpty)
+        {
+            try
+            {
+                var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(cachedIdsJson.ToString());
+                if (ids != null && ids.Count > 0)
+                {
+                    // Lấy bài viết theo ID từ DB
+                    var posts = await _dbSet
+                        .Include(p => p.User)
+                            .ThenInclude(u => u.Followers)
+                        .Include(p => p.Likes)
+                        .Include(p => p.SavedByUsers)
+                        .Where(p => ids.Contains(p.Id))
+                        .ToListAsync();
+
+                    // Giữ đúng thứ tự trending
+                    return ids.Select(id => posts.FirstOrDefault(p => p.Id == id))
+                              .Where(p => p != null)
+                              .ToList()!;
+                }
+            }
+            catch
+            {
+                // Ignore parse errors and fallback
+            }
+        }
+
+        // Fallback: Chạy logic cũ nếu Redis chưa có hoặc lỗi
         var today = DateTime.UtcNow.Date;
         var tomorrow = today.AddDays(1);
 

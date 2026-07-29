@@ -159,6 +159,9 @@ builder.Services.AddSingleton<IPresenceTracker, RedisPresenceTracker>();
 builder.Services.AddScoped<IMealSuggestionService, MealSuggestionService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 
+// Register Hosted Services
+builder.Services.AddHostedService<TrendingPostBackgroundService>();
+
 // Register Repositories
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
