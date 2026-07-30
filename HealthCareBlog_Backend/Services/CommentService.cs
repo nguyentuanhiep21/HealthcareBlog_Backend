@@ -68,15 +68,29 @@ public class CommentService : ICommentService
         post.CommentCount++;
         await _commentRepository.SaveChangesAsync();
 
-        // Gửi notification cho chủ bài viết
-        await _notificationService.CreateNotificationAsync(
-            post.UserId,
-            authorId,
-            NotificationType.Comment,
-            "đã bình luận về bài viết của bạn",
-            createCommentDTO.PostId,
-            newComment.Id
-        );
+        // Gửi notification
+        if (parentComment != null)
+        {
+            await _notificationService.CreateNotificationAsync(
+                parentComment.UserId,
+                authorId,
+                NotificationType.Comment,
+                "đã trả lời bình luận của bạn",
+                createCommentDTO.PostId,
+                newComment.Id
+            );
+        }
+        else
+        {
+            await _notificationService.CreateNotificationAsync(
+                post.UserId,
+                authorId,
+                NotificationType.Comment,
+                "đã bình luận về bài viết của bạn",
+                createCommentDTO.PostId,
+                newComment.Id
+            );
+        }
 
         // Reload với User data để map DTO
         var commentWithUser = await _commentRepository.GetByIdWithUserAsync(newComment.Id);
@@ -156,6 +170,16 @@ public class CommentService : ICommentService
         await _commentRepository.AddLikeAsync(newLike);
         comment.LikeCount++;
         await _commentRepository.SaveChangesAsync();
+
+        await _notificationService.CreateNotificationAsync(
+            comment.UserId,
+            userId,
+            NotificationType.Like,
+            "đã thích bình luận của bạn",
+            comment.PostId,
+            comment.Id
+        );
+
         return true;
     }
 
