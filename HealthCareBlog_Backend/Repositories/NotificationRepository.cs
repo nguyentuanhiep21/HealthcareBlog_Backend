@@ -46,6 +46,30 @@ public class NotificationRepository : INotificationRepository
             .ToListAsync();
     }
 
+    public async Task<NotificationDTO?> GetNotificationDTOByIdAsync(int notificationId)
+    {
+        return await _context.Notifications
+            .Include(n => n.Actor)
+            .Where(n => n.Id == notificationId)
+            .Select(n => new NotificationDTO
+            {
+                Id = n.Id,
+                Type = n.Type.ToString().ToLower(),
+                Content = n.Content,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt,
+                Actor = n.Actor != null ? new ActorDTO
+                {
+                    Id = n.Actor.Id!,
+                    FullName = n.Actor.FullName ?? "Unknown",
+                    AvatarUrl = n.Actor.AvatarUrl
+                } : null,
+                PostId = n.PostId,
+                CommentId = n.CommentId
+            })
+            .FirstOrDefaultAsync();
+    }
+
     public Task<int> GetUnreadCountAsync(string userId)
         => _context.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead);
 

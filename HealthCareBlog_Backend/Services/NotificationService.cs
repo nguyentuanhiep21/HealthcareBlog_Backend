@@ -1,7 +1,9 @@
+using HealthCareBlog_Backend.Hubs;
 using HealthCareBlog_Backend.Interfaces;
 using HealthCareBlog_Backend.Models.DTOs.Notifications;
 using HealthCareBlog_Backend.Models.Entities;
 using HealthCareBlog_Backend.Services.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 
 namespace HealthCareBlog_Backend.Services;
 
@@ -12,10 +14,12 @@ namespace HealthCareBlog_Backend.Services;
 public class NotificationService : INotificationService
 {
     private readonly INotificationRepository _notificationRepository;
+    private readonly IHubContext<NotificationHub> _hubContext;
 
-    public NotificationService(INotificationRepository notificationRepository)
+    public NotificationService(INotificationRepository notificationRepository, IHubContext<NotificationHub> hubContext)
     {
         _notificationRepository = notificationRepository;
+        _hubContext = hubContext;
     }
 
     public async Task<List<NotificationDTO>> GetUserNotificationsAsync(string userId, int page = 1, int pageSize = 20)
@@ -65,5 +69,12 @@ public class NotificationService : INotificationService
 
         await _notificationRepository.AddAsync(notification);
         await _notificationRepository.SaveChangesAsync();
+
+        // Push notification to client via SignalR
+        var notificationDto = await _notificationRepository.GetNotificationDTOByIdAsync(notification.Id);
+        if (notificationDto != null)
+        {
+            await _hubContext.Clients.User(userId).SendAsync("ReceiveNotification", notificationDto);
+        }
     }
 }

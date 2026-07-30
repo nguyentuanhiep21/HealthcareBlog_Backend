@@ -11,6 +11,7 @@ public interface INotificationRepository
     Task<List<NotificationDTO>> GetUserNotificationsDTOAsync(string userId, int page, int pageSize);
     Task<int> GetUnreadCountAsync(string userId);
     Task<Notification?> GetByIdForUserAsync(int notificationId, string userId);
+    Task<NotificationDTO?> GetNotificationDTOByIdAsync(int notificationId);
     Task<List<Notification>> GetUnreadByUserIdAsync(string userId);
     Task AddAsync(Notification notification);
     Task<int> SaveChangesAsync();
