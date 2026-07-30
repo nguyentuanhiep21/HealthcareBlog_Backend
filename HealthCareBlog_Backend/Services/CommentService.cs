@@ -29,6 +29,12 @@ public class CommentService : ICommentService
         return comments.Select(c => c.ToViewCommentDTO(userId)).ToList();
     }
 
+    public async Task<List<ViewCommentDTO>> ViewRepliesAsync(string? userId, int commentId, int page = 1, int pageSize = 10)
+    {
+        var replies = await _commentRepository.GetRepliesByCommentIdAsync(commentId, page, pageSize);
+        return replies.Select(c => c.ToViewCommentDTO(userId)).ToList();
+    }
+
     public async Task<CommentDetailDTO> CreateCommentAsync(string authorId, CreateCommentDTO createCommentDTO)
     {
         if (createCommentDTO == null)
@@ -37,15 +43,28 @@ public class CommentService : ICommentService
         var post = await _commentRepository.GetPostByIdAsync(createCommentDTO.PostId)
             ?? throw new NotFoundException("Không tìm thấy bài viết.");
 
+        Comment? parentComment = null;
+        if (createCommentDTO.ParentCommentId.HasValue)
+        {
+            parentComment = await _commentRepository.GetByIdAsync(createCommentDTO.ParentCommentId.Value)
+                ?? throw new NotFoundException("Không tìm thấy bình luận cha.");
+            if (parentComment.PostId != createCommentDTO.PostId)
+                throw new BadRequestException("Bình luận cha không thuộc bài viết này.");
+            if (parentComment.ParentCommentId != null)
+                throw new BadRequestException("Chỉ hỗ trợ trả lời bình luận gốc (1 cấp).");
+        }
+
         var newComment = new Comment
         {
             UserId = authorId,
             PostId = createCommentDTO.PostId,
+            ParentCommentId = createCommentDTO.ParentCommentId,
             Content = createCommentDTO.Content,
             CreatedAt = DateTimeHelper.GetVietnamTime()
         };
 
         await _commentRepository.AddAsync(newComment);
+        if (parentComment != null) parentComment.ReplyCount++;
         post.CommentCount++;
         await _commentRepository.SaveChangesAsync();
 
@@ -91,8 +110,20 @@ public class CommentService : ICommentService
         await _commentRepository.RemoveNotificationsByCommentIdAsync(commentId);
 
         var post = await _commentRepository.GetPostByIdAsync(comment.PostId);
-        if (post != null && post.CommentCount > 0)
-            post.CommentCount--;
+        if (comment.ParentCommentId.HasValue)
+        {
+            var parent = await _commentRepository.GetByIdAsync(comment.ParentCommentId.Value);
+            if (parent != null && parent.ReplyCount > 0) parent.ReplyCount--;
+            if (post != null && post.CommentCount > 0) post.CommentCount--;
+        }
+        else
+        {
+            var decreaseAmount = 1 + comment.ReplyCount;
+            if (post != null && post.CommentCount >= decreaseAmount) 
+                post.CommentCount -= decreaseAmount;
+            else if (post != null) 
+                post.CommentCount = 0;
+        }
 
         _commentRepository.Remove(comment);
         await _commentRepository.SaveChangesAsync();
@@ -164,11 +195,23 @@ public class CommentService : ICommentService
         var post = await _commentRepository.GetPostByIdAsync(comment.PostId);
 
         await _commentRepository.RemoveAllLikesByCommentIdAsync(commentId);
+        await _commentRepository.RemoveNotificationsByCommentIdAsync(commentId);
+        if (comment.ParentCommentId.HasValue)
+        {
+            var parent = await _commentRepository.GetByIdAsync(comment.ParentCommentId.Value);
+            if (parent != null && parent.ReplyCount > 0) parent.ReplyCount--;
+            if (post != null && post.CommentCount > 0) post.CommentCount--;
+        }
+        else
+        {
+            var decreaseAmount = 1 + comment.ReplyCount;
+            if (post != null && post.CommentCount >= decreaseAmount) 
+                post.CommentCount -= decreaseAmount;
+            else if (post != null) 
+                post.CommentCount = 0;
+        }
 
         _commentRepository.Remove(comment);
-
-        if (post != null && post.CommentCount > 0)
-            post.CommentCount--;
 
         await _commentRepository.SaveChangesAsync();
         return true;

@@ -24,10 +24,6 @@ public class PostRepository : BaseRepository<Post>, IPostRepository
             .Include(p => p.User)
             .Include(p => p.Likes)
             .Include(p => p.SavedByUsers)
-            .Include(p => p.Comments)
-                .ThenInclude(c => c.User)
-            .Include(p => p.Comments)
-                .ThenInclude(c => c.Likes)
             .FirstOrDefaultAsync(p => p.Id == postId);
 
     public async Task<List<Post>> GetPagedAsync(int page, int pageSize)

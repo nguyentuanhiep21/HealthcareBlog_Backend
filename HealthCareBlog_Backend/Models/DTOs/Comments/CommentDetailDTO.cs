@@ -1,9 +1,10 @@
-﻿namespace HealthCareBlog_Backend.Models.DTOs.Comments
+namespace HealthCareBlog_Backend.Models.DTOs.Comments
 {
     public class CommentDetailDTO
     {
         public int Id { get; set; }
         public int PostId { get; set; }
+        public int? ParentCommentId { get; set; }
         public string? UserId { get; set; }
         public CommentUserDTO User { get; set; } = null!;
         public string? Content { get; set; }

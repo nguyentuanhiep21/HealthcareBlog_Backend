@@ -16,8 +16,11 @@ public interface ICommentRepository
     /// <summary>Lấy comment kèm User data (sau khi tạo/cập nhật)</summary>
     Task<Comment?> GetByIdWithUserAsync(int commentId);
 
-    /// <summary>Lấy danh sách comments của 1 post, phân trang</summary>
+    /// <summary>Lấy danh sách comments gốc của 1 post, phân trang</summary>
     Task<List<Comment>> GetByPostIdAsync(int postId, int page, int pageSize);
+
+    /// <summary>Lấy danh sách trả lời của 1 comment, phân trang</summary>
+    Task<List<Comment>> GetRepliesByCommentIdAsync(int parentCommentId, int page, int pageSize);
 
     /// <summary>Lấy post để cập nhật CommentCount</summary>
     Task<Post?> GetPostByIdAsync(int postId);

@@ -33,6 +33,15 @@ public class CommentController : ControllerBase
         return Ok(comments);
     }
 
+    [HttpGet("{commentId:int}/replies")]
+    public async Task<ActionResult<List<ViewCommentDTO>>> GetReplies(
+        int commentId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var userId = User.GetUserId();
+        var replies = await _commentService.ViewRepliesAsync(userId, commentId, page, pageSize);
+        return Ok(replies);
+    }
+
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<CommentDetailDTO>> CreateComment([FromBody] CreateCommentDTO dto)

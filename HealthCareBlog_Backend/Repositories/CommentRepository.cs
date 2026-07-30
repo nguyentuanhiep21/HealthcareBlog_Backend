@@ -37,8 +37,24 @@ public class CommentRepository : ICommentRepository
         return await _context.Comments
             .Include(c => c.User)
             .Include(c => c.Likes)
-            .Where(c => c.PostId == postId)
+            .Where(c => c.PostId == postId && c.ParentCommentId == null)
             .OrderByDescending(c => c.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+    }
+
+    public async Task<List<Comment>> GetRepliesByCommentIdAsync(int parentCommentId, int page, int pageSize)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        if (pageSize > 100) pageSize = 100;
+
+        return await _context.Comments
+            .Include(c => c.User)
+            .Include(c => c.Likes)
+            .Where(c => c.ParentCommentId == parentCommentId)
+            .OrderBy(c => c.CreatedAt) // Replies thường xếp theo thứ tự cũ nhất trước
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

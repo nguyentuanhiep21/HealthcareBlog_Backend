@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthCareBlog_Backend.Models.Entities;
@@ -26,6 +26,13 @@ public class Comment
   [Column("like_count")]
   public int LikeCount { get; set; } // Số lượt thích
 
+  [Column("reply_count")]
+  public int ReplyCount { get; set; } // Số lượt trả lời
+
+  // ========== HIERARCHY ==========
+  [Column("parent_comment_id")]
+  public int? ParentCommentId { get; set; } // ID bình luận cha (nếu có)
+
   // ========== FOREIGN KEYS ==========
   [Column("post_id")]
   [Required]
@@ -44,4 +51,9 @@ public class Comment
   public virtual User User { get; set; } = null!; // Tác giả bình luận
 
   public virtual ICollection<LikeComment> Likes { get; set; } = new List<LikeComment>(); // Lượt thích cho bình luận
+
+  [ForeignKey("ParentCommentId")]
+  public virtual Comment? ParentComment { get; set; } // Bình luận cha
+
+  public virtual ICollection<Comment> Replies { get; set; } = new List<Comment>(); // Các bình luận trả lời
 }

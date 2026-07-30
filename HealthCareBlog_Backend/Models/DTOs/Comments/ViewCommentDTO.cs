@@ -1,4 +1,4 @@
-﻿namespace HealthCareBlog_Backend.Models.DTOs.Comments
+namespace HealthCareBlog_Backend.Models.DTOs.Comments
 {
     public class ViewCommentDTO
     {
@@ -9,6 +9,8 @@
         public DateTime UploadTime { get; set; }
         public string Content { get; set; } = string.Empty;
         public int LikeCount { get; set; }
+        public int ReplyCount { get; set; }
+        public int? ParentCommentId { get; set; }
         public bool IsLikedByCurrentUser { get; set; }
     }
 

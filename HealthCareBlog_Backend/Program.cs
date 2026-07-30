@@ -152,7 +152,6 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<INutritionService, NutritionService>();
 builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 builder.Services.AddSingleton<IHealthAssessmentService, HealthAssessmentService>();
 builder.Services.AddSingleton<IPresenceTracker, RedisPresenceTracker>();
@@ -171,7 +170,6 @@ builder.Services.AddScoped<ISavedPostRepository, SavedPostRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<ISearchRepository, SearchRepository>();
-builder.Services.AddScoped<INutritionRepository, NutritionRepository>();
 builder.Services.AddScoped<IMealSuggestionRepository, MealSuggestionRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 

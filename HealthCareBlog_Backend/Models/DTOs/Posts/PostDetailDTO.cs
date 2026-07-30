@@ -11,7 +11,6 @@ namespace HealthCareBlog_Backend.Models.DTOs.Posts
         public DateTime CreatedAt { get; set; }
         public string? ImageUrl { get; set; } // backward compat
         public List<string> ImageUrls { get; set; } = new List<string>(); // Danh sách URL ảnh (tối đa 5)
-        public List<ViewCommentDTO> Comments { get; set; } = new List<ViewCommentDTO>();
         public int LikeCount { get; set; }
         public int CommentCount { get; set; }
         public bool IsLikedByCurrentUser { get; set; }

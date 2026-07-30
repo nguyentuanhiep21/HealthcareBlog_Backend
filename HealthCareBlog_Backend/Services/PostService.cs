@@ -85,13 +85,7 @@ public class PostService : IPostService
         var post = await _postRepository.GetByIdWithDetailsAsync(postId)
             ?? throw new NotFoundException("Post not found.");
 
-        var comments = post.Comments
-            .OrderByDescending(c => c.CreatedAt)
-            .Select(c => c.ToViewCommentDTO(userId))
-            .ToList();
-
         var postDTO = post.ToPostDetailDTO(userId);
-        postDTO.Comments = comments;
 
         return postDTO;
     }

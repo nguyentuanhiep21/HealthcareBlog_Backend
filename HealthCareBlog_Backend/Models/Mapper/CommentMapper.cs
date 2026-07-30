@@ -1,4 +1,4 @@
-﻿using HealthCareBlog_Backend.Models.DTOs.Comments;
+using HealthCareBlog_Backend.Models.DTOs.Comments;
 using HealthCareBlog_Backend.Models.Entities;
 
 namespace HealthCareBlog_Backend.Models.Mapper
@@ -11,6 +11,7 @@ namespace HealthCareBlog_Backend.Models.Mapper
             {
                 Id = comment.Id,
                 PostId = comment.PostId,
+                ParentCommentId = comment.ParentCommentId,
                 UserId = comment.UserId,
                 Content = comment.Content,
                 CreatedAt = comment.CreatedAt,
@@ -32,6 +33,8 @@ namespace HealthCareBlog_Backend.Models.Mapper
                 PostId = comment.PostId,
                 Content = comment.Content,
                 LikeCount = comment.LikeCount,
+                ReplyCount = comment.ReplyCount,
+                ParentCommentId = comment.ParentCommentId,
                 UploadTime = comment.CreatedAt,
                 IsLikedByCurrentUser = UserId != null && comment.Likes.Any(like => like.UserId == UserId),
                 Author = new CommentAuthorDTO
