@@ -49,12 +49,12 @@ namespace HealthCareBlog_Backend.Services
             var frontendUrl = _configuration["AppSettings:FrontendUrl"];
             var verificationUrl = $"{frontendUrl}/auth/verify-email?userId={System.Uri.EscapeDataString(userId)}&token={System.Uri.EscapeDataString(token)}";
 
-            var emailSubject = "Xác nhận tài khoản HealthCareBlog";
+            var emailSubject = "Xác nhận tài khoản HealthcareBlog";
             var emailBody = $@"
                 <div style='font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; color: #334155;'>
                     <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);'>
                         <div style='background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); padding: 30px; text-align: center;'>
-                            <h1 style='color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;'>Sức Khỏe</h1>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;'>HealthcareBlog</h1>
                         </div>
                         <div style='padding: 40px 30px;'>
                             <h2 style='color: #0f172a; font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 20px;'>Chào mừng bạn đến với cộng đồng!</h2>
@@ -92,12 +92,12 @@ namespace HealthCareBlog_Backend.Services
             var frontendUrl = _configuration["AppSettings:FrontendUrl"];
             var resetUrl = $"{frontendUrl}/auth/reset-password?userId={System.Uri.EscapeDataString(userId)}&token={System.Uri.EscapeDataString(token)}";
 
-            var emailSubject = "Đặt lại mật khẩu HealthCareBlog";
+            var emailSubject = "Đặt lại mật khẩu HealthcareBlog";
             var emailBody = $@"
                 <div style='font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; color: #334155;'>
                     <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);'>
                         <div style='background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); padding: 30px; text-align: center;'>
-                            <h1 style='color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;'>Sức Khỏe</h1>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;'>HealthcareBlog</h1>
                         </div>
                         <div style='padding: 40px 30px;'>
                             <h2 style='color: #0f172a; font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 20px;'>Đặt lại mật khẩu</h2>
